@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Swaddle Sweeper</title>
+  <style>
+    body {
+      font-family: 'Quicksand', sans-serif;
+      background-color: #f9f6f3;
+      color: #4a4a4a;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #d09aa8;
+      font-size: 2.5rem;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(8, 40px);
+      grid-gap: 5px;
+      justify-content: center;
+      margin: 2rem auto;
+    }
+    .cell {
+      width: 40px;
+      height: 40px;
+      background-color: #fafafa;
+      border: 2px solid #d09aa8;
+      border-radius: 6px;
+      font-size: 1.2rem;
+      line-height: 40px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      user-select: none;
+    }
+    .cell.revealed {
+      background-color: #f0d5db;
+      cursor: default;
+    }
+    .cell.mine {
+      background-color: #bc7e95;
+      color: white;
+    }
+    .cell.flagged {
+      background-color: #ffeef3;
+      color: #d46e8c;
+    }
+    button {
+      background-color: #d09aa8;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #c28494;
+    }
+    @media (max-width: 500px) {
+      .grid {
+        grid-template-columns: repeat(8, 32px);
+      }
+      .cell {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+        line-height: 32px;
+      }
+    }
+    .button-area {
+        text-align: center;
+        margin-top: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Swaddle Sweeper</h1>
+  <p>Find all the swaddles without hitting a 💩!</p>
+  <p id="mine-counter">💩 Mines: 10</p>
+
+  <div id="grid" class="grid"></div>
+
+  <div class="button-area">
+    <button onclick="startGame()">Restart Game</button>
+  </div>
+
+  <div style="background-color: #fff5f7; border: 2px dashed #d09aa8; border-radius: 8px; padding: 0.5rem 1rem; margin: 1rem auto; display: inline-block; font-size: 1rem;">
+    <strong>Legend:</strong><br>
+    🍼 = 1 &nbsp; | &nbsp;
+    🧸 = 2 &nbsp; | &nbsp;
+    🧦 = 3 &nbsp; | &nbsp;
+    👶 = 4 &nbsp; | &nbsp;
+    🩷 = Your marker &nbsp; | &nbsp;
+    💩 = Dirty diaper
+  </div>
+  
+
+  <script>
+    const size = 8;
+    const mineCount = 10;
+    let board = [];
+    let gameOver = false;
+
+    const emojiMap = {
+      1: '🍼',
+      2: '🧸',
+      3: '🧦',
+      4: '👶',
+    };
+
+    const grid = document.getElementById('grid');
+
+    function startGame() {
+      board = [];
+      gameOver = false;
+      generateBoard();
+      placeMines();
+      calculateNumbers();
+      drawGrid();
+    }
+
+    function generateBoard() {
+      for (let i = 0; i < size * size; i++) {
+        board.push({ mine: false, revealed: false, flagged: false, number: 0 });
+      }
+    }
+
+    function placeMines() {
+      let placed = 0;
+      while (placed < mineCount) {
+        let index = Math.floor(Math.random() * board.length);
+        if (!board[index].mine) {
+          board[index].mine = true;
+          placed++;
+        }
+      }
+    }
+
+    function calculateNumbers() {
+  for (let i = 0; i < board.length; i++) {
+    if (board[i].mine) {
+      board[i].number = 0; // not needed but safe to declare
+      continue;
+    }
+    const neighbors = getNeighbors(i);
+    board[i].number = neighbors.reduce((count, idx) => count + (board[idx].mine ? 1 : 0), 0);
+  }
+}
+
+    function getNeighbors(index) {
+      const x = index % size;
+      const y = Math.floor(index / size);
+      const offsets = [-1, 0, 1];
+      const neighbors = [];
+
+      for (let dx of offsets) {
+        for (let dy of offsets) {
+          if (dx === 0 && dy === 0) continue;
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < size && ny >= 0 && ny < size) {
+            neighbors.push(ny * size + nx);
+          }
+        }
+      }
+
+      return neighbors;
+    }
+
+    function reveal(index) {
+      const cell = board[index];
+      const el = document.getElementById(`cell-${index}`);
+      if (gameOver || cell.revealed || cell.flagged) return;
+
+      cell.revealed = true;
+      el.classList.add('revealed');
+      el.classList.remove('flagged');
+      el.textContent = '';
+
+      if (cell.mine) {
+        el.textContent = '💩';
+        el.classList.add('mine');
+        revealAllMines();
+        alert('Oops! You found a dirty diaper!');
+        gameOver = true;
+        return;
+      }
+
+      if (cell.number > 0) {
+        el.textContent = emojiMap[cell.number] || '👶';
+        el.classList.add('safe');
+      } else {
+        getNeighbors(index).forEach(reveal);
+      }
+
+      checkWin();
+    }
+
+    function toggleFlag(index) {
+  if (gameOver || board[index].revealed) return;
+
+  const cell = board[index];
+  const el = document.getElementById(`cell-${index}`);
+
+  if (!cell.flagged) {
+    cell.flagged = true;
+    el.textContent = '🩷';
+    el.classList.add('flagged');
+
+    const totalFlags = board.filter(c => c.flagged).length;
+
+    if (totalFlags > mineCount) {
+      const correctFlags = board.filter(c => c.flagged && c.mine).length;
+      alert(`You've placed too many hearts! There are only ${mineCount} diapers left. You've placed ${totalFlags} hearts, but only ${correctFlags} are correct.`);
+    }
+
+  } else {
+    cell.flagged = false;
+    el.textContent = '';
+    el.classList.remove('flagged');
+  }
+}
+
+
+
+    function updateMineCounter() {
+      const flagged = board.filter(cell => cell.flagged).length;
+      document.getElementById("mine-counter").textContent = `💩 Mines: ${mineCount - flagged}`;
+}
+    function revealAllMines() {
+      board.forEach((cell, i) => {
+        if (cell.mine) {
+          const el = document.getElementById(`cell-${i}`);
+          el.textContent = '💩';
+          el.classList.add('revealed', 'mine');
+        }
+      });
+    }
+
+    function checkWin() {
+      const allSafeRevealed = board.every(cell => cell.mine || cell.revealed);
+      if (allSafeRevealed && !gameOver) {
+        alert("You found all the swaddles! 🎉");
+        gameOver = true;
+      }
+    }
+
+    function drawGrid() {
+      grid.innerHTML = '';
+      for (let i = 0; i < board.length; i++) {
+        const cell = document.createElement('div');
+        cell.id = `cell-${i}`;
+        cell.className = 'cell';
+        cell.onclick = (e) => {
+          if (board[i].flagged) {
+            toggleFlag(i); // remove flag
+          } else if (!board[i].revealed) {
+            reveal(i);
+          }
+        };
+        cell.oncontextmenu = (e) => {
+          e.preventDefault();
+          toggleFlag(i);
+        };
+        grid.appendChild(cell);
+      }
+    }
+
+    // Auto-start
+    startGame();
+  </script>
+</body>
+</html>
