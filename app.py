@@ -6,11 +6,16 @@ from datetime import datetime
 from flask import session
 
 app = Flask(__name__)
+
 CORS(app, supports_credentials=True, origins=["https://babywishlist.netlify.app"])
 
 app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "0708")
 
+app.config.update(
+    SESSION_COOKIE_SECURE=True,  # Only send over HTTPS
+    SESSION_COOKIE_SAMESITE="None",  # Allow cross-site cookie from Netlify
+)
 
 
 # Allow multiple reservations per gift
@@ -41,18 +46,16 @@ def format_name(name):
     return ' '.join(w.capitalize() for w in name.strip().split())
 
 
-@app.route('/adminlogin', methods=['POST'])
+@app.route('/admin-login', methods=['POST'])
 def admin_login():
     data = request.get_json()
     password = data.get("password")
-    print(">>> Admin login attempt with password:", password)
-
+    print("[LOGIN] Received password:", password)
     if password == ADMIN_PASSWORD:
         session['admin'] = True
-        print(">>> Login success. session['admin'] =", session.get('admin'))
+        print("[LOGIN] Admin session set")
         return "Logged in", 200
-
-    print(">>> Login failed.")
+    print("[LOGIN] Unauthorized access attempt")
     return "Unauthorized", 401
 
 @app.route('/check-admin')
