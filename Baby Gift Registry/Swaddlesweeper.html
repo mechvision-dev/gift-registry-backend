@@ -79,7 +79,14 @@
 <body>
   <h1>Swaddle Sweeper</h1>
   <p>Find all the swaddles without hitting a 💩!</p>
-  <p id="mine-counter">💩 Mines: 10</p>
+  <p id="game-info">
+    ⏱️ Time: <span id="timer">00:00</span>
+    &nbsp; | &nbsp;
+    💩 Mines: 10
+    <br>
+    🏆 Best: <span id="best-time">--:--</span>
+  </p>
+  
 
   <div id="grid" class="grid"></div>
 
@@ -99,11 +106,11 @@
   
 
   <script>
-
+let bestTime = localStorage.getItem('swaddleBestTime') || null;
 window.addEventListener('DOMContentLoaded', () => {
   if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
     const hint = document.createElement('small');
-    hint.innerHTML = '👉 On mobile: tap to reveal, double tap to place a 🩷';
+    hint.innerHTML = '👉 On mobile: tap to reveal, press and hold to place a 🩷';
     hint.style.display = 'block';
     hint.style.marginTop = '1rem';
     hint.style.color = '#b06d82';
@@ -114,6 +121,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const size = 8;
     const mineCount = 10;
     let board = [];
+    let timerInterval = null;
+    let startTime = null;
+    let timerStarted = false;
     let gameOver = false;
 
     const emojiMap = {
@@ -126,13 +136,19 @@ window.addEventListener('DOMContentLoaded', () => {
     const grid = document.getElementById('grid');
 
     function startGame() {
+      stopTimer();
+      document.getElementById('best-time').textContent = bestTime ? formatTime(bestTime) : '--:--';
+      timerStarted = false;
+      document.getElementById('timer').textContent = '00:00';
+
       board = [];
       gameOver = false;
       generateBoard();
       placeMines();
       calculateNumbers();
       drawGrid();
-    }
+}
+
 
     function generateBoard() {
       for (let i = 0; i < size * size; i++) {
@@ -185,6 +201,9 @@ window.addEventListener('DOMContentLoaded', () => {
     function reveal(index) {
       const cell = board[index];
       const el = document.getElementById(`cell-${index}`);
+      if (!timerStarted) {
+        startTimer();
+      }
       if (gameOver || cell.revealed || cell.flagged) return;
 
       cell.revealed = true;
@@ -198,6 +217,7 @@ window.addEventListener('DOMContentLoaded', () => {
         revealAllMines();
         alert('Oops! You found a dirty diaper!');
         gameOver = true;
+        stopTimer();
         return;
       }
 
@@ -209,6 +229,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
 
       checkWin();
+      
     }
 
     function toggleFlag(index) {
@@ -264,57 +285,87 @@ window.addEventListener('DOMContentLoaded', () => {
     function checkWin() {
       const allSafeRevealed = board.every(cell => cell.mine || cell.revealed);
       if (allSafeRevealed && !gameOver) {
-        alert("You found all the swaddles! 🎉");
         gameOver = true;
+        stopTimer();
+
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        if (!bestTime || elapsed < bestTime) {
+          bestTime = elapsed;
+          localStorage.setItem('swaddleBestTime', elapsed);
+          alert(`🎉 You found all the swaddles!\n🕒 New Best Time: ${formatTime(elapsed)}`);
+        } else {
+          alert(`🎉 You found all the swaddles!\n⏱️ Time: ${formatTime(elapsed)}\n🏆 Best: ${formatTime(bestTime)}`);
+        }
       }
+    }
+    function startTimer() {
+      startTime = Date.now();
+      timerStarted = true;
+
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('timer').textContent = formatTime(elapsed);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+      timerStarted = false;
+    }
+
+    function formatTime(seconds) {
+      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
     }
 
     function drawGrid() {
-  grid.innerHTML = '';
+      grid.innerHTML = '';
 
-  for (let i = 0; i < board.length; i++) {
-    const cell = document.createElement('div');
-    cell.id = `cell-${i}`;
-    cell.className = 'cell';
+      for (let i = 0; i < board.length; i++) {
+        const cell = document.createElement('div');
+        cell.id = `cell-${i}`;
+        cell.className = 'cell';
 
-    // ---- Desktop behavior (unchanged) ----
-    cell.onclick = () => {
-      if (board[i].flagged) {
+        // ---- Desktop behavior (unchanged) ----
+        cell.onclick = () => {
+          if (board[i].flagged) {
+            toggleFlag(i);
+          } else if (!board[i].revealed) {
+            reveal(i);
+    }
+   };
+
+      cell.oncontextmenu = (e) => {
+        e.preventDefault();
         toggleFlag(i);
-      } else if (!board[i].revealed) {
-        reveal(i);
-      }
-    };
+      };
+    
+    
 
-    cell.oncontextmenu = (e) => {
-      e.preventDefault();
-      toggleFlag(i);
-    };
+// ---- Mobile: press and hold to flag ----
+let pressTimer = null;
+let longPress = false;
 
-    // ---- Mobile: double-tap for flag ----
-let lastTap = 0;
-let tapTimeout = null;
+cell.addEventListener("touchstart", (e) => {
+  longPress = false;
+  pressTimer = setTimeout(() => {
+    toggleFlag(i);
+    longPress = true;
+  }, 500); // 500ms press = flag
+});
 
 cell.addEventListener("touchend", () => {
-  const now = Date.now();
-  const tapDelay = now - lastTap;
-
-  if (tapDelay < 300 && tapDelay > 0) {
-    // Double tap detected — cancel scheduled reveal
-    clearTimeout(tapTimeout);
-    tapTimeout = null;
-    toggleFlag(i);
-    lastTap = 0;
-  } else {
-    // Schedule reveal with delay
-    lastTap = now;
-    tapTimeout = setTimeout(() => {
-      if (!board[i].flagged && !board[i].revealed) {
-        reveal(i);
-      }
-    }, 320); // Give a bit of room for 2nd tap
+  clearTimeout(pressTimer);
+  if (!longPress && !board[i].flagged && !board[i].revealed) {
+    reveal(i); // tap = reveal
   }
 });
+
+cell.addEventListener("touchcancel", () => {
+  clearTimeout(pressTimer);
+});
+
 
 
     grid.appendChild(cell);
@@ -324,6 +375,7 @@ cell.addEventListener("touchend", () => {
 
     // Auto-start
     startGame();
+    
   </script>
 </body>
 </html>
