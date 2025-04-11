@@ -26,65 +26,102 @@
     th {
       background-color: #f0d5db;
     }
+    button {
+      background-color: #d09aa8;
+      color: white;
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #b06d82;
+    }
   </style>
 </head>
 <body>
+  <button onclick="logout()" style="float:right;background:#ccc;border:none;padding:0.5rem;">Logout</button>
   <h1>Admin Dashboard</h1>
-<p>This page shows all current reservations.</p>
+  <p>This page shows all current reservations.</p>
 
-<table id="reservationTable" border="1" cellpadding="8" style="margin-top: 1rem; border-collapse: collapse;">
-  <thead>
-    <tr>
-      <th>Gift ID</th>
-      <th>Reserved By</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+  <table id="reservationTable">
+    <thead>
+      <tr>
+        <th>Entry ID</th>
+        <th>Gift ID</th>
+        <th>Reserved By</th>
+        <th>Timestamp</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<script>
-  async function loadAdminData() {
-    const res = await fetch("https://gift-registry-backend.onrender.com/admin-data");
-    const data = await res.json();
-
-    const tbody = document.querySelector("#reservationTable tbody");
-    tbody.innerHTML = '';
-
-    Object.keys(data).forEach(id => {
-      data[id].forEach(name => {
-        const row = document.createElement('tr');
-
-        row.innerHTML = `
-          <td>${id}</td>
-          <td>${name}</td>
-          <td><button onclick="unreserve(${id}, '${name}')">Unreserve</button></td>
-        `;
-
-        tbody.appendChild(row);
-      });
-    });
-  }
-
-  async function unreserve(id, name) {
-    if (!confirm(`Remove ${name}'s reservation for gift ID ${id}?`)) return;
-
-    const res = await fetch("https://gift-registry-backend.onrender.com/unreserve", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, reservedBy: name })
-    });
-
-    if (res.ok) {
-      alert("Reservation removed.");
-      loadAdminData();
-    } else {
-      alert("Failed to remove reservation.");
+  <script>
+    async function checkLogin() {
+      const res = await fetch("https://gift-registry-backend.onrender.com/check-admin", { credentials: "include" });
+      const data = await res.json();
+      if (!data.admin) {
+        window.location.href = "admin-login.html";
+      }
     }
-  }
-
-  loadAdminData();
-</script>
-
+  
+    async function loadAdminData() {
+      const res = await fetch("https://gift-registry-backend.onrender.com/admin-data", { credentials: "include" });
+      const data = await res.json();
+  
+      const tbody = document.querySelector("#reservationTable tbody");
+      tbody.innerHTML = '';
+      const fragment = document.createDocumentFragment();
+  
+      Object.entries(data).forEach(([id, entries]) => {
+        entries.forEach(entry => {
+          const row = document.createElement('tr');
+  
+          row.innerHTML = `
+            <td>${entry.entry_id}</td>
+            <td>${id}</td>
+            <td>${entry.name}</td>
+            <td>${entry.timestamp}</td>
+            <td><button onclick="unreserve(${entry.entry_id})">Unreserve</button></td>
+          `;
+  
+          fragment.appendChild(row);
+        });
+      });
+  
+      tbody.appendChild(fragment);
+    }
+  
+    async function unreserve(entryId) {
+      if (!confirm(`Remove this reservation?`)) return;
+  
+      const res = await fetch("https://gift-registry-backend.onrender.com/unreserve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ entry_id: entryId })
+      });
+  
+      if (res.ok) {
+        alert("Reservation removed.");
+        loadAdminData();
+      } else {
+        alert("Failed to remove reservation.");
+      }
+    }
+  
+    async function logout() {
+      await fetch("https://gift-registry-backend.onrender.com/logout", {
+        method: "POST",
+        credentials: "include"
+      });
+      window.location.href = "admin-login.html";
+    }
+  
+    checkLogin().then(loadAdminData);
+  </script>
+  
+  
 </body>
 </html>

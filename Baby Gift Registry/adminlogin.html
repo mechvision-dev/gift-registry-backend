@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login</title>
+  <style>
+    body { font-family: Arial; padding: 2rem; background: #fef6f8; }
+    form { max-width: 300px; margin: auto; }
+    input { width: 100%; padding: 0.5rem; margin: 0.5rem 0; }
+    button { background: #d09aa8; color: white; padding: 0.5rem; border: none; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h2>Admin Login</h2>
+  <form onsubmit="login(event)">
+    <input type="password" id="password" placeholder="Enter password" required />
+    <button type="submit">Login</button>
+  </form>
+
+  <script>
+    async function login(event) {
+      event.preventDefault();
+      const password = document.getElementById("password").value;
+      const res = await fetch("https://gift-registry-backend.onrender.com/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password })
+      });
+      if (res.ok) {
+        window.location.href = "admin.html";
+      } else {
+        alert("Incorrect password.");
+      }
+    }
+  </script>
+</body>
+</html>
