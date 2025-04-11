@@ -29,55 +29,62 @@
   </style>
 </head>
 <body>
-  <h1>Gift Reservations</h1>
-  <table id="reservationsTable">
-    <thead>
-      <tr><th>Gift ID</th><th>Reserved By</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <h1>Admin Dashboard</h1>
+<p>This page shows all current reservations.</p>
 
-  <h1>Notes & Suggestions</h1>
-  <table id="notesTable">
-    <thead>
-      <tr><th>Name</th><th>Note</th></tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<table id="reservationTable" border="1" cellpadding="8" style="margin-top: 1rem; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Gift ID</th>
+      <th>Reserved By</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <script>
-    const API_URL = "https://gift-registry-backend.onrender.com/";
+<script>
+  async function loadAdminData() {
+    const res = await fetch("https://gift-registry-backend.onrender.com/admin-data");
+    const data = await res.json();
 
-    async function loadReservations() {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        const tbody = document.querySelector("#reservationsTable tbody");
-        data.forEach(entry => {
-          const row = `<tr><td>${entry.id}</td><td>${entry.reservedBy}</td></tr>`;
-          tbody.insertAdjacentHTML("beforeend", row);
-        });
-      } catch (err) {
-        console.error("Failed to load reservations", err);
-      }
+    const tbody = document.querySelector("#reservationTable tbody");
+    tbody.innerHTML = '';
+
+    Object.keys(data).forEach(id => {
+      data[id].forEach(name => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td>${id}</td>
+          <td>${name}</td>
+          <td><button onclick="unreserve(${id}, '${name}')">Unreserve</button></td>
+        `;
+
+        tbody.appendChild(row);
+      });
+    });
+  }
+
+  async function unreserve(id, name) {
+    if (!confirm(`Remove ${name}'s reservation for gift ID ${id}?`)) return;
+
+    const res = await fetch("https://gift-registry-backend.onrender.com/unreserve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, reservedBy: name })
+    });
+
+    if (res.ok) {
+      alert("Reservation removed.");
+      loadAdminData();
+    } else {
+      alert("Failed to remove reservation.");
     }
+  }
 
-    async function loadNotes() {
-      try {
-        const res = await fetch(`${API_URL}notes`);
-        const data = await res.json();
-        const tbody = document.querySelector("#notesTable tbody");
-        data.forEach(entry => {
-          const row = `<tr><td>${entry.name}</td><td>${entry.note}</td></tr>`;
-          tbody.insertAdjacentHTML("beforeend", row);
-        });
-      } catch (err) {
-        console.error("Failed to load notes", err);
-      }
-    }
+  loadAdminData();
+</script>
 
-    loadReservations();
-    loadNotes();
-  </script>
 </body>
 </html>

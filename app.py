@@ -85,6 +85,14 @@ def migrate_reservations_table():
         return "Migration successful! The reservations table now supports multiple entries per gift.", 200
     except Exception as e:
         return f"Migration failed: {e}", 500
+@app.route('/admin-data')
+def admin_data():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.execute("SELECT id, reservedBy FROM reservations ORDER BY id ASC")
+        grouped = {}
+        for gift_id, name in cursor.fetchall():
+            grouped.setdefault(gift_id, []).append(name)
+    return jsonify(grouped)
 
     
 if __name__ == '__main__':
