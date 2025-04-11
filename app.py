@@ -21,6 +21,7 @@ def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute('''
             CREATE TABLE IF NOT EXISTS reservations (
+                entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id INTEGER,
                 reservedBy TEXT
             )
@@ -95,25 +96,27 @@ def migrate_reservations_table():
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
 
-            # Step 1: Create the new schema
+            # Step 1: Create new schema with auto-incrementing entry_id
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS new_reservations (
+                    entry_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     id INTEGER,
                     reservedBy TEXT
                 )
             ''')
 
             # Step 2: Copy old data
-            cursor.execute('INSERT INTO new_reservations SELECT id, reservedBy FROM reservations')
+            cursor.execute('INSERT INTO new_reservations (id, reservedBy) SELECT id, reservedBy FROM reservations')
 
             # Step 3: Replace the old table
             cursor.execute('DROP TABLE reservations')
             cursor.execute('ALTER TABLE new_reservations RENAME TO reservations')
 
             conn.commit()
-        return "Migration successful! The reservations table now supports multiple entries per gift.", 200
+        return "Migration successful! Schema now allows duplicate gift IDs.", 200
     except Exception as e:
         return f"Migration failed: {e}", 500
+
     
 @app.route('/admin-data')
 def admin_data():
