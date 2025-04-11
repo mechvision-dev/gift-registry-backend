@@ -498,22 +498,29 @@ function formatName(name) {
     .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(" ");
 }
-/* Fetch reservations from the server */
+
 async function fetchReservations() {
   try {
-    const response = await fetch(API_URL);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
-    data.forEach(entry => {
-      const gift = gifts.find(g => g.id === entry.id);
-      if (gift) gift.reservedBy = entry.reservedBy || null;
+    const res = await fetch("https://gift-registry-backend.onrender.com/summary");
+    if (!res.ok) {
+      throw new Error(`HTTP error! Status: ${res.status}`);
+    }
+
+    const summary = await res.json();  // ✅ define this first
+
+    gifts.forEach(gift => {
+      gift.reservedCount = (typeof summary === "object" && summary[gift.id] !== undefined)
+        ? summary[gift.id]
+        : 0;
     });
+
     renderGifts();
-  } catch (error) {
-    console.error("Error fetching reservations:", error);
+  } catch (err) {
+    console.error("Failed to fetch summary:", err);
     renderGifts();
   }
 }
+
 
 /* Render the gift list */
 function renderGifts() {
@@ -560,8 +567,8 @@ function renderGiftActions(gift) {
 
   const savedName = localStorage.getItem("guestName") || "";
   const max = gift.maxReservations || 1;
-  const reservedList = Array.isArray(gift.reservedBy) ? gift.reservedBy : gift.reservedBy ? [gift.reservedBy] : [];
-  const available = max - reservedList.length;
+  const reserved = gift.reservedCount || 0;
+  const available = max - reserved;
 
   if (available <= 0) {
     return `
@@ -574,7 +581,7 @@ function renderGiftActions(gift) {
     <a href="${gift.link}" target="_blank"><button>View Gift</button></a>
     <input type="text" id="name-${gift.id}" placeholder="Your name" value="${savedName}">
     <button onclick="reserveGift(${gift.id})">Reserve Gift (${available} left)</button>
-    ${reservedList.length ? `<p><strong>Reserved by:</strong> ${reservedList.join(", ")}</p>` : ""}
+    ${gift.reservedBy ? `<p><strong>Reserved by:</strong> ${gift.reservedBy}</p>` : ""}
   `;
 }
 
