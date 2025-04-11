@@ -1,53 +1,36 @@
 <!--
 FILE: index.html
-DESCRIPTION: This HTML file represents a baby gift registry webpage for Joanne and Jonathan. 
-       It includes a list of gifts, a special note section, and a form for users to leave notes or suggest gifts.
+DESCRIPTION: This HTML file is the frontend for a baby gift registry, integrated with a backend API for dynamic data handling.
 
 FEATURES:
-1. **Typography and Styling**:
-   - Uses Google Fonts ('Quicksand' and 'Great Vibes') for custom typography.
-   - Includes CSS styles for layout, hover effects, and responsive design.
+1. **Backend API Integration**:
+  - API: `https://gift-registry-backend.onrender.com/`
+  - Fetches and updates reservations dynamically.
+  - Supports POST requests for gift reservations.
 
-2. **Gift List**:
-   - Displays a grid of gift cards with details such as name, note, image(s), and reservation status.
-   - Supports reserving gifts by entering a name and submitting it to the backend API.
+2. **Error Handling**:
+  - Logs API errors to the console.
+  - Renders static data if API calls fail.
 
-3. **Special Note Section**:
-   - Encourages users to gift books instead of cards for the baby.
-   - Includes an image and a styled message.
+3. **Dynamic Gift Management**:
+  - Gifts are rendered dynamically from a JavaScript array.
+  - Supports configurable reservation limits.
 
-4. **Extra Notes Section**:
-   - Allows users to leave a note or suggest a gift.
-   - Displays a confirmation message upon submission.
+4. **Interactive Slideshow**:
+  - Autoplay, manual navigation, and hover-to-pause features.
+  - Smooth animations via CSS transitions.
 
-5. **Image Gallery and Slideshow**:
-   - Implements a horizontal image gallery for scrolling through images.
-   - Includes a slideshow feature for gifts with multiple images, cycling every 3 seconds.
+5. **User Input**:
+  - Allows gift reservations with local storage for user names.
+  - Includes a form for notes or gift suggestions.
 
-6. **API Integration**:
-   - Fetches gift reservation data from a backend API.
-   - Posts reservation data to the backend when a gift is reserved.
-
-7. **Dynamic Rendering**:
-   - Dynamically renders the gift list based on the data fetched from the API.
-   - Updates the UI to reflect reservation status.
-
-8. **Responsive Design**:
-   - Uses CSS grid and flexible layouts to ensure compatibility across different screen sizes.
+6. **Responsive Design**:
+  - Adapts layout for mobile and desktop using CSS media queries.
 
 USAGE:
-- Open the file in a browser to view the baby gift registry.
-- Users can browse the gift list, reserve gifts, and leave notes or suggestions.
-
-DEPENDENCIES:
-- Google Fonts for typography.
-- Backend API hosted at "https://gift-registry-backend.onrender.com/" for fetching and posting reservation data.
-
-NOTES:
-- Ensure the backend API is running and accessible for full functionality.
-- The last two gifts in the list are not reservable and do not include links or buttons.
--->
-<!DOCTYPE html>
+- Requires an operational backend API.
+- Open in a browser to interact with the registry.
+- Use developer tools for debugging API calls and UI updates.
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
@@ -360,6 +343,13 @@ NOTES:
     </button>
   </a>
 </div>
+<div style="text-align: center; margin-top: 3rem;">
+  <a href="Baby%20Gift%20Registry/admin.html">
+    <button style="background-color: #d09aa8; color: white; padding: 0.5rem 1.2rem; font-size: 1rem; border-radius: 8px; border: none; cursor: pointer;">
+      🛠️ Admin Dashboard
+    </button>
+  </a>
+</div>
 
 <script>
 const API_URL = "https://gift-registry-backend.onrender.com/";
@@ -497,9 +487,17 @@ let gifts = [
         ] 
       }
     ];
-  // Additional gift objects...
+ 
 
-
+// ✅ Format name consistently: " jon clarke " → "Jon Clarke"
+function formatName(name) {
+  return name
+    .trim()
+    .replace(/\s+/g, ' ')
+    .split(" ")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
 /* Fetch reservations from the server */
 async function fetchReservations() {
   try {
@@ -630,7 +628,8 @@ function attachSlideshowEvents() {
 /* Reserve a gift */
 async function reserveGift(id) {
   const nameInput = document.getElementById(`name-${id}`);
-  const name = nameInput?.value.trim();
+  const rawName = nameInput?.value.trim();
+  const name = formatName(rawName);
   if (!name) return alert("Please enter your name");
 
   localStorage.setItem("guestName", name);
@@ -665,6 +664,44 @@ async function reserveGift(id) {
     button.innerText = "Reserve Gift";
   }
 }
+async function unreserveGift(id) {
+  const storedName = localStorage.getItem(`name-${id}`);
+  if (!storedName) return alert("No reservation found under your name.");
+
+  const enteredRaw = prompt("To confirm, enter the name you used to reserve:");
+  const enteredName = formatName(enteredRaw);
+  if (!enteredName || enteredName.length < 3) {
+  return alert("Please enter a valid name (3+ characters) to unreserve.");
+  }
+
+  if (enteredName !== formatName(storedName)) {
+    return alert("Name does not match the reservation on record.");
+  }
+
+  try {
+    const res = await fetch(API_URL + "unreserve", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, reservedBy: enteredName.trim() })
+    });
+    const msg = await res.text();
+    if (res.ok) {
+      alert("Your reservation has been removed.");
+      gifts.find(g => g.id === id).reservedBy = gifts.find(g => g.id === id).reservedBy.filter(n => n !== enteredName.trim());
+      localStorage.removeItem(`name-${id}`);
+      renderGifts();
+    } else {
+      alert("Could not unreserve: " + msg);
+    }
+    const cleanedName = name.trim().replace(/\s+/g, ' ');
+const formattedName = cleanedName.split(" ")
+  .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+  .join(" ");
+  } catch (err) {
+    console.error(err);
+    alert("Error trying to unreserve.");
+  }
+}
 
 /* Submit a note or gift suggestion */
 function submitNote() {
@@ -680,4 +717,11 @@ function submitNote() {
 fetchReservations();
 </script>
 </body>
+<script>
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.altKey && e.key === "A") {
+      window.location.href = "Baby%20Gift%20Registry/admin.html";
+    }
+  });
+</script>
 </html>

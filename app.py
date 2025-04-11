@@ -37,7 +37,8 @@ def get_reservations():
 def reserve():
     data = request.get_json()
     gift_id = data.get("id")
-    reserved_by = data.get("reservedBy")
+    reserved_by = reserved_by.strip().title()  # Consistent formatting
+
 
     if not gift_id or not reserved_by:
         return "Invalid data", 400
@@ -85,6 +86,7 @@ def migrate_reservations_table():
         return "Migration successful! The reservations table now supports multiple entries per gift.", 200
     except Exception as e:
         return f"Migration failed: {e}", 500
+    
 @app.route('/admin-data')
 def admin_data():
     with sqlite3.connect(DB_PATH) as conn:
@@ -94,6 +96,19 @@ def admin_data():
             grouped.setdefault(gift_id, []).append(name)
     return jsonify(grouped)
 
+@app.route('/unreserve', methods=['POST'])
+def unreserve():
+    data = request.get_json()
+    gift_id = data.get("id")
+    reserved_by = data.get("reservedBy")
+
+    if not gift_id or not reserved_by:
+        return "Invalid data", 400
+
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("DELETE FROM reservations WHERE id = ? AND reservedBy = ?", (gift_id, reserved_by))
+        conn.commit()
+    return "Reservation removed", 200
     
 if __name__ == '__main__':
     init_db()
