@@ -249,26 +249,42 @@
     }
 
     function drawGrid() {
-      grid.innerHTML = '';
-      for (let i = 0; i < board.length; i++) {
-        const cell = document.createElement('div');
-        cell.id = `cell-${i}`;
-        cell.className = 'cell';
-        cell.onclick = (e) => {
-          if (board[i].flagged) {
-            toggleFlag(i); // remove flag
-          } else if (!board[i].revealed) {
-            reveal(i);
-          }
-        };
-        cell.oncontextmenu = (e) => {
-          e.preventDefault();
-          toggleFlag(i);
-        };
-        grid.appendChild(cell);
-      }
-    }
+  grid.innerHTML = '';
+  for (let i = 0; i < board.length; i++) {
+    const cell = document.createElement('div');
+    cell.id = `cell-${i}`;
+    cell.className = 'cell';
 
+    // Desktop: left-click or right-click
+    cell.onclick = () => {
+      if (board[i].flagged) {
+        toggleFlag(i);
+      } else if (!board[i].revealed) {
+        reveal(i);
+      }
+    };
+    cell.oncontextmenu = (e) => {
+      e.preventDefault();
+      toggleFlag(i);
+    };
+
+    // Mobile: long-press to flag
+    let pressTimer = null;
+    cell.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      pressTimer = setTimeout(() => toggleFlag(i), 500); // hold 500ms
+    });
+
+    cell.addEventListener("touchend", () => {
+      clearTimeout(pressTimer);
+    });
+    cell.addEventListener("touchcancel", () => {
+      clearTimeout(pressTimer);
+    });
+
+    grid.appendChild(cell);
+  }
+}
     // Auto-start
     startGame();
   </script>
