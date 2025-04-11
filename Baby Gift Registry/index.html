@@ -368,7 +368,7 @@ let gifts = [
       "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/WLP_0385.jpg?v=1731961222&width=1200",
       "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/WLP_0202.jpg?v=1731961248&width=1200"
     ],
-    reservedBy: null,
+    
     maxReservations: 3
   },
   { id: 2, 
@@ -380,7 +380,7 @@ let gifts = [
           "https://puppapupo.global/cdn/shop/files/202001_s22_g.jpg?v=1726635935&width=1080",
           "https://puppapupo.global/cdn/shop/files/202001_s24_g.jpg?v=1726635935&width=1080"  
     ],
-    reservedBy: null },
+    },
 
   { id: 3, 
     name: "Change Mat", note: "Nice and simple", 
@@ -389,7 +389,7 @@ let gifts = [
           "https://kmartau.mo.cloudinary.net/f4127119-bcec-42b1-951f-bc4443a4d97b.jpg?tx=w_640,h_640",
           "https://kmartau.mo.cloudinary.net/550e017e-b046-42bf-b20b-b6721bb1381a.jpg" 
     ], 
-    reservedBy: null,
+    
     maxReservations: 2 },
 
 
@@ -402,7 +402,7 @@ let gifts = [
           "https://www.econaps.com.au/cdn/shop/files/Econaps_Snow_White_2_0_Modern_Cloth_Nappy_4.png?v=1714963769&width=1920",
           "https://www.econaps.com.au/cdn/shop/files/Econaps_Snow_White_2_0_Modern_Cloth_Nappy_3.png?v=1720955297&width=1920" 
         ], 
-      reservedBy: null,
+      
       maxReservations: 30  },
       
       { id: 5, name: "8 in 1 Sniffle Survival Bundle - Snooze Plus + Nasal Aspirator + Oils", 
@@ -415,7 +415,7 @@ let gifts = [
           "https://livelyliving.com.au/cdn/shop/files/Aroma-Snooze_Plus_Covers.jpg?v=1740573389"
 
         ], 
-        reservedBy: null 
+        
       },
       { id: 6, name: "Baby Hip Seat", 
         note: "Preferably Beige", 
@@ -426,7 +426,7 @@ let gifts = [
           "https://my-little-darling-shop.com/cdn/shop/products/download-main-images-download-variant_main-4_15_1280x.jpg?v=1706611453"
 
         ], 
-        reservedBy: null 
+        
       },
 
       { id: 7, 
@@ -436,7 +436,7 @@ let gifts = [
         images: [ 
           "https://assets.babybunting.com.au/prd/121907_1.jpg?tr=w-2000,h-2000,f-webp,q-80,cm-pad_resize",
         ], 
-        reservedBy: null 
+        
       },
 
       { id: 8, 
@@ -448,7 +448,7 @@ let gifts = [
           "https://uppababy.com.au/cdn/shop/files/0901-WTY_1-2.webp?v=1713686708&width=2000",
           "https://uppababy.com.au/cdn/shop/files/0901-WTY_1-3.webp?v=1713686709&width=2000"  
         ], 
-        reservedBy: null 
+        
       },
 
       { id: 9, 
@@ -459,7 +459,7 @@ let gifts = [
           "https://lovevery.com.au/_next/image/?url=https%3A%2F%2Fimages.ctfassets.net%2F0sea1vycfyqy%2F4JOZWpTK7pjX7kVSzSJWd1%2F0135182a08ebca0346697580ece5d437%2FPlay-Gym_MASTER_VS_R4rev2_1.gif&w=750&q=75",
 
         ], 
-        reservedBy: null 
+        
       },
       { id: 10, 
         name: "Play Mat", 
@@ -470,7 +470,7 @@ let gifts = [
           "https://wallabycollective.com/cdn/shop/files/Wallaby_Collective_Natural_Oat_Linen_Play_Mat_06_2048x2048_9dedf912-4343-4307-90bf-543e2f0bc10c.jpg?v=1727586320&width=823", 
           "https://wallabycollective.com/cdn/shop/files/Wallaby_Collective_Natural_Linen_Play_Mat_2048x2048_0f728eb3-56e4-4130-ad09-19e116aac3ea.jpg?v=1740554919&width=823"
         ], 
-        reservedBy: null 
+        
       },
       { id: 11, 
         name: "A Wish for Baby", 
@@ -529,7 +529,7 @@ function renderGifts() {
 
   gifts.forEach(gift => {
     const div = document.createElement("div");
-    div.className = `gift${gift.reservedBy ? " taken" : ""}`;
+    div.className = `gift${gift.reservedCount > 0 ? " taken" : ""}`;
     div.innerHTML = `
       <h3>${gift.name}</h3>
       ${gift.note ? `<p class="note">${gift.note}</p>` : ""}
@@ -655,11 +655,9 @@ async function reserveGift(id) {
     const result = await response.text();
 
     if (result === "Success") {
-      const gift = gifts.find(g => g.id === id);
-      if (gift) {
-        if (!Array.isArray(gift.reservedBy)) gift.reservedBy = [];
-        gift.reservedBy.push(name);
-      }
+      
+      await fetchReservations();  // Refresh with accurate backend data
+
       renderGifts();
     } else {
       alert(result);
@@ -672,16 +670,17 @@ async function reserveGift(id) {
   }
 }
 async function unreserveGift(id) {
-  const storedName = localStorage.getItem(`name-${id}`);
+  const storedName = localStorage.getItem("guestName");
   if (!storedName) return alert("No reservation found under your name.");
 
   const enteredRaw = prompt("To confirm, enter the name you used to reserve:");
   const enteredName = formatName(enteredRaw);
+
   if (!enteredName || enteredName.length < 3) {
-  return alert("Please enter a valid name (3+ characters) to unreserve.");
+    return alert("Please enter a valid name (3+ characters) to unreserve.");
   }
 
-  if (enteredName !== formatName(storedName)) {
+  if (enteredName !== storedName) {
     return alert("Name does not match the reservation on record.");
   }
 
@@ -689,26 +688,23 @@ async function unreserveGift(id) {
     const res = await fetch(API_URL + "unreserve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, reservedBy: enteredName.trim() })
+      body: JSON.stringify({ id, reservedBy: enteredName })
     });
+
     const msg = await res.text();
     if (res.ok) {
       alert("Your reservation has been removed.");
-      gifts.find(g => g.id === id).reservedBy = gifts.find(g => g.id === id).reservedBy.filter(n => n !== enteredName.trim());
-      localStorage.removeItem(`name-${id}`);
-      renderGifts();
+      localStorage.removeItem("guestName");
+      await fetchReservations(); // ✅ Re-render gifts based on fresh backend state
     } else {
       alert("Could not unreserve: " + msg);
     }
-    const cleanedName = name.trim().replace(/\s+/g, ' ');
-const formattedName = cleanedName.split(" ")
-  .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
-  .join(" ");
   } catch (err) {
-    console.error(err);
-    alert("Error trying to unreserve.");
+    console.error("Unreserve error:", err);
+    alert("Something went wrong while unreserving.");
   }
 }
+
 
 /* Submit a note or gift suggestion */
 function submitNote() {

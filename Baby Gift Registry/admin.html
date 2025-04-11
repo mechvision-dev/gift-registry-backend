@@ -58,6 +58,8 @@
   </table>
 
   <script>
+
+
     async function checkLogin() {
       const res = await fetch("https://gift-registry-backend.onrender.com/check-admin", { credentials: "include" });
       const data = await res.json();
@@ -67,36 +69,33 @@
     }
   
     async function loadAdminData() {
-      const res = await fetch("https://gift-registry-backend.onrender.com/admin-data", { credentials: "include" });
-      const data = await res.json();
-  
-      const tbody = document.querySelector("#reservationTable tbody");
-      tbody.innerHTML = '';
-      const fragment = document.createDocumentFragment();
-  
-      Object.entries(data).forEach(([id, entries]) => {
-        entries.forEach(entry => {
-          const row = document.createElement('tr');
-  
-          row.innerHTML = `
-            <td>${entry.entry_id}</td>
-            <td>${id}</td>
-            <td>${entry.name}</td>
-            <td>${entry.timestamp}</td>
-            <td><button onclick="unreserve(${entry.entry_id})">Unreserve</button></td>
-          `;
-  
-          fragment.appendChild(row);
-        });
-      });
-  
-      tbody.appendChild(fragment);
-    }
+  const res = await fetch("https://gift-registry-backend.onrender.com/admin/reservations", { credentials: "include" });
+  const data = await res.json();
+
+  const tbody = document.querySelector("#reservationTable tbody");
+  tbody.innerHTML = '';
+  const fragment = document.createDocumentFragment();
+
+  data.forEach(entry => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${entry.entry_id}</td>
+      <td>${entry.gift_id}</td>
+      <td>${entry.name}</td>
+      <td>${entry.timestamp}</td>
+      <td><button onclick="unreserve(${entry.entry_id})">Unreserve</button></td>
+    `;
+    fragment.appendChild(row);
+  });
+
+  tbody.appendChild(fragment);
+}
+
   
     async function unreserve(entryId) {
       if (!confirm(`Remove this reservation?`)) return;
   
-      const res = await fetch("https://gift-registry-backend.onrender.com/unreserve", {
+      const res = await fetch("https://gift-registry-backend.onrender.com/admin/delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

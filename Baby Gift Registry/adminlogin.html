@@ -18,20 +18,32 @@
   </form>
 
   <script>
+    const API_URL = "https://gift-registry-backend.onrender.com/";
+    
     async function login(event) {
       event.preventDefault();
-      const password = document.getElementById("password").value;
-      const res = await fetch("https://gift-registry-backend.onrender.com/admin-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
-      });
-      if (res.ok) {
-        window.location.href = "admin.html";
-      } else {
-        alert("Incorrect password.");
+      const password = document.getElementById("admin-password").value;
+    
+      try {
+        const response = await fetch(API_URL + "admin-login", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ password })
+        });
+    
+        if (response.ok) {
+          window.location.href = "admin.html"; // ✅ redirect here after login
+        } else {
+          alert("Incorrect password. Please try again.");
+        }
+      } catch (err) {
+        console.error("Login error:", err);
+        alert("There was a problem with login.");
       }
     }
-  </script>
+    </script>
 </body>
 </html>

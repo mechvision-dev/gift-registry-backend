@@ -3,9 +3,15 @@ from flask_cors import CORS
 import sqlite3
 import os
 from datetime import datetime
+from flask import session
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True, origins=["https://babywishlist.netlify.app"])
+
+app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "0708")
+
+
 
 # Allow multiple reservations per gift
 GIFT_LIMITS = {
@@ -33,7 +39,28 @@ def init_db():
 def format_name(name):
     """Standardizes name casing: '  joHn   SMITH ' -> 'John Smith'"""
     return ' '.join(w.capitalize() for w in name.strip().split())
+@app.after_request
+def apply_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "https://babywishlist.netlify.app"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    return response
 
+@app.route('/admin-login', methods=['POST'])
+def admin_login():
+    data = request.get_json()
+    password = data.get("password")
+    if password == ADMIN_PASSWORD:
+        session['admin'] = True
+        return "Logged in", 200
+    return "Unauthorized", 401
+
+@app.route('/check-admin')
+def check_admin():
+    if session.get('admin'):
+        return jsonify({"admin": True})
+    return jsonify({"admin": False})
 
 @app.route('/', methods=['GET'])
 def get_reservations():
@@ -112,6 +139,14 @@ def debug_reservations():
 
 @app.route('/migrate-reservations-table')
 def migrate_reservations_table():
+    """
+    Endpoint to migrate the reservations table to a new structure.
+    
+    This creates a new table `new_reservations` with the same structure as `reservations`,
+    copies all data from the old table, and renames the old table to `reservations_backup`.
+    The new table is then renamed to `reservations`. This operation is irreversible and
+    should be used with caution as it modifies the database schema.
+    """
     try:
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
@@ -123,13 +158,46 @@ def migrate_reservations_table():
                     timestamp TEXT DEFAULT CURRENT_TIMESTAMP
                 )
             ''')
-            cursor.execute('INSERT INTO new_reservations (id, reservedBy, timestamp) SELECT id, reservedBy, datetime("now") FROM reservations')
-            cursor.execute('DROP TABLE reservations')
-            cursor.execute('ALTER TABLE new_reservations RENAME TO reservations')
+            cursor.execute('INSERT INTO new_reservations (id, reservedBy, timestamp) SELECT id, reservedBy, timestamp FROM reservations')
+            cursor.execute('ALTER TABLE reservations RENAME TO reservations_backup')
+            # Verify migration before renaming the table
+            cursor.execute('SELECT COUNT(*) FROM new_reservations')
+            new_count = cursor.fetchone()[0]
+            cursor.execute('SELECT COUNT(*) FROM reservations')
+            old_count = cursor.fetchone()[0]
+
+            if new_count == old_count:
+                cursor.execute('ALTER TABLE new_reservations RENAME TO reservations')
+            else:
+                raise Exception("Migration verification failed: row counts do not match")
             conn.commit()
         return "Migration successful! Table now includes timestamp.", 200
     except Exception as e:
-        return f"Migration failed: {e}", 500
+        import logging
+        logging.error("Migration failed", exc_info=True)
+        return "Migration failed due to an internal error.", 500
+
+@app.route('/admin/reservations', methods=['GET'])
+def admin_reservations():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.execute("SELECT entry_id, id, reservedBy, timestamp FROM reservations ORDER BY id ASC, timestamp ASC")
+        rows = [{"entry_id": row[0], "gift_id": row[1], "name": row[2], "timestamp": row[3]} for row in cursor.fetchall()]
+    return jsonify(rows)
+
+@app.route('/admin/delete', methods=['POST'])
+def admin_delete():
+    data = request.get_json()
+    entry_id = data.get("entry_id")
+
+    if not entry_id:
+        return "Missing entry_id", 400
+
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.execute("DELETE FROM reservations WHERE entry_id = ?", (entry_id,))
+        if cursor.rowcount == 0:
+            return "Reservation not found", 404
+        conn.commit()
+    return "Reservation deleted", 200
 
 
 if __name__ == '__main__':
