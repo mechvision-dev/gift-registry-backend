@@ -1,49 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Login</title>
   <style>
-    body { font-family: Arial; padding: 2rem; background: #fef6f8; }
-    form { max-width: 300px; margin: auto; }
-    input { width: 100%; padding: 0.5rem; margin: 0.5rem 0; }
-    button { background: #d09aa8; color: white; padding: 0.5rem; border: none; border-radius: 5px; cursor: pointer; }
+    body {
+      font-family: Arial, sans-serif;
+      background: #fef6f8;
+      padding: 2rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #b06d82;
+    }
+
+    form {
+      max-width: 320px;
+      margin: 2rem auto;
+      background: #fff;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    input {
+      width: 100%;
+      padding: 0.6rem;
+      margin: 0.75rem 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      background: #d09aa8;
+      color: white;
+      padding: 0.6rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    button:hover {
+      background: #b06d82;
+    }
   </style>
 </head>
 <body>
   <h2>Admin Login</h2>
-  <form onsubmit="login(event)">
-    <input type="password" id="password" placeholder="Enter password" required />
+  <form id="adminLoginForm">
+    <input type="password" id="admin-password" placeholder="Enter admin password" required />
     <button type="submit">Login</button>
   </form>
 
   <script>
     const API_URL = "https://gift-registry-backend.onrender.com/";
-    
-    async function login(event) {
+
+    document.getElementById("adminLoginForm").addEventListener("submit", async function (event) {
       event.preventDefault();
-      const password = document.getElementById("admin-password").value;
-    
+
+      const passwordInput = document.getElementById("admin-password");
+      const password = passwordInput.value;
+
       try {
         const response = await fetch(API_URL + "admin-login", {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ password })
         });
-    
+
         if (response.ok) {
-          window.location.href = "admin.html"; // ✅ redirect here after login
+          window.location.href = "admin.html";
         } else {
           alert("Incorrect password. Please try again.");
         }
       } catch (err) {
         console.error("Login error:", err);
-        alert("There was a problem with login.");
+        alert("There was a problem logging in.");
       }
-    }
-    </script>
+    });
+  </script>
 </body>
 </html>
