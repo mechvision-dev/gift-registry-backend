@@ -1,0 +1,676 @@
+<!--
+FILE: index.html
+DESCRIPTION: This HTML file represents a baby gift registry webpage for Joanne and Jonathan. 
+       It includes a list of gifts, a special note section, and a form for users to leave notes or suggest gifts.
+
+FEATURES:
+1. **Typography and Styling**:
+   - Uses Google Fonts ('Quicksand' and 'Great Vibes') for custom typography.
+   - Includes CSS styles for layout, hover effects, and responsive design.
+
+2. **Gift List**:
+   - Displays a grid of gift cards with details such as name, note, image(s), and reservation status.
+   - Supports reserving gifts by entering a name and submitting it to the backend API.
+
+3. **Special Note Section**:
+   - Encourages users to gift books instead of cards for the baby.
+   - Includes an image and a styled message.
+
+4. **Extra Notes Section**:
+   - Allows users to leave a note or suggest a gift.
+   - Displays a confirmation message upon submission.
+
+5. **Image Gallery and Slideshow**:
+   - Implements a horizontal image gallery for scrolling through images.
+   - Includes a slideshow feature for gifts with multiple images, cycling every 3 seconds.
+
+6. **API Integration**:
+   - Fetches gift reservation data from a backend API.
+   - Posts reservation data to the backend when a gift is reserved.
+
+7. **Dynamic Rendering**:
+   - Dynamically renders the gift list based on the data fetched from the API.
+   - Updates the UI to reflect reservation status.
+
+8. **Responsive Design**:
+   - Uses CSS grid and flexible layouts to ensure compatibility across different screen sizes.
+
+USAGE:
+- Open the file in a browser to view the baby gift registry.
+- Users can browse the gift list, reserve gifts, and leave notes or suggestions.
+
+DEPENDENCIES:
+- Google Fonts for typography.
+- Backend API hosted at "https://gift-registry-backend.onrender.com/" for fetching and posting reservation data.
+
+NOTES:
+- Ensure the backend API is running and accessible for full functionality.
+- The last two gifts in the list are not reservable and do not include links or buttons.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Joanne &amp; Jonathan's Baby Wish List</title>
+<!-- Google Fonts for custom typography -->
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600&amp;family=Great+Vibes&amp;display=swap" rel="stylesheet"/>
+<style>
+  /* General body styling */
+  body {
+    font-family: 'Quicksand', sans-serif;
+    margin: 0;
+    background-color: #f9f6f3;
+    color: #4a4a4a;
+    padding: 2rem;
+  }
+
+  /* Main heading styling */
+  h1 {
+    font-family: 'Great Vibes', cursive;
+    text-align: center;
+    font-size: 3rem;
+    color: #d09aa8;
+    margin-bottom: 1rem;
+  }
+
+  /* Gift list grid layout */
+  .gift-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  /* Individual gift card styling */
+  .gift {
+    background-color: #fafafa;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+  }
+
+  .gift:hover {
+    transform: translateY(-5px);
+  }
+
+  .gift.taken {
+    background-color: #f0d5db;
+    opacity: 0.9;
+  }
+
+  .gift h3 {
+    margin-top: 0;
+    color: #b06d82;
+    font-size: 1.3rem;
+  }
+
+  .note {
+    font-style: italic;
+    color: #7d7d7d;
+  }
+
+  .gift img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin: 0.5rem 0;
+  }
+
+  input[type="text"], textarea {
+    padding: 0.5rem;
+    width: 100%;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-family: inherit;
+  }
+
+  button {
+    background-color: #d09aa8;
+    color: #fff;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #bc7e95;
+  }
+
+  .special-note {
+    text-align: center;
+    margin: 2rem auto;
+    max-width: 700px;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #6d5c5c;
+    padding: 1.5rem;
+    background-color: #fafafa;
+    border-radius: 12px;
+  }
+
+  .special-note .note-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .special-note img {
+    width: 100px;
+    height: auto;
+    border-radius: 8px;
+    flex-shrink: 0;
+  }
+
+  .extra-notes {
+    max-width: 600px;
+    margin: 2rem auto;
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+
+  .extra-notes h2 {
+    color: #b06d82;
+  }
+
+  .confirmation {
+    color: green;
+    font-weight: bold;
+    margin-top: 1rem;
+  }
+
+  .image-gallery {
+    display: flex;
+    overflow-x: auto;
+    gap: 0.5rem;
+    padding-bottom: 0.5rem;
+    scroll-snap-type: x mandatory;
+  }
+
+  .image-gallery img {
+    height: 200px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    object-fit: cover;
+    scroll-snap-align: start;
+  }
+
+  .slideshow {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+  }
+
+  .slideshow img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    z-index: 0;
+    transition: opacity 0.6s ease-in-out;
+  }
+
+  .slideshow img.active {
+    opacity: 1;
+    z-index: 1;
+  }
+
+  .slideshow-dots {
+    text-align: center;
+    margin-top: 0.5rem;
+  }
+
+  .slideshow-dots .dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 0 4px;
+    background-color: #ccc;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+  }
+
+  .slideshow-dots .dot.active {
+    background-color: #d09aa8;
+  }
+
+  .slideshow-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(255, 255, 255, 0.7);
+    border: none;
+    font-size: 1.5rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+    border-radius: 50%;
+    z-index: 2;
+    transition: background-color 0.3s;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .slideshow:hover .slideshow-arrow {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .slideshow-arrow:hover {
+    background-color: #f3c4d2;
+  }
+
+  .slideshow-arrow.prev {
+    left: 5px;
+  }
+
+  .slideshow-arrow.next {
+    right: 5px;
+  }
+
+  @media (max-width: 600px) {
+    .gift-list {
+      grid-template-columns: 1fr;
+    }
+
+    .special-note, .extra-notes {
+      padding: 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1200px) {
+    .gift-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    h1 {
+      font-size: 4rem;
+    }
+  }
+
+  @media (min-width: 600px) and (max-width: 1200px) {
+    .gift-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    h1 {
+      font-size: 3.5rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .gift-list {
+      grid-template-columns: 1fr;
+    }
+
+    h1 {
+      font-size: 2rem;
+    }
+  }
+</style>
+</head>
+<body>
+<!-- Main heading -->
+<h1>
+  Joanne
+  <span style="margin: 0 0.2em;">&amp;</span>
+  Jonathan's  <span style="margin: 0 0.1em;"></span> Baby  Wish List
+</h1>
+
+<!-- Special note section -->
+<div class="special-note">
+  <div class="note-content">
+  <img alt="Books for baby" src="https://www.bigw.com.au/medias/sys_master/images/images/hb1/h5c/81041309499422.jpg"/>
+  <p>Instead of cards, we would love books to help fill baby's little library with love.
+    <span style="color: #d09aa8;">♥</span>
+  </p>
+  </div>
+</div>
+
+<!-- Gift list container -->
+<div class="gift-list" id="giftList"></div>
+
+<!-- Extra notes section -->
+<div class="extra-notes">
+  <h2>Leave a Note or Suggest a Gift</h2>
+  <input id="otherName" placeholder="Your name" type="text"/>
+  <textarea id="otherNote" placeholder="Message or gift suggestion..." rows="4"></textarea>
+  <button onclick="submitNote()">Send</button>
+  <div class="confirmation" id="noteConfirm"></div>
+</div>
+
+<script>
+const API_URL = "https://gift-registry-backend.onrender.com/";
+const slideIndices = {};
+let gifts = [
+  // Gift objects with details like id, name, note, link, image, and reservation status
+  {
+    id: 1,
+    name: "Swaddelini",
+    note: "Love this - we will need a few of these",
+    link: "https://swaddeliniaustralia.myshopify.com/collections/all",
+    images: [
+      "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/Screenshot_2024-06-24_at_1.02.23_PM.png?v=1731961261&width=1200",
+      "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/WLP_0108_48e9c12a-184a-4e89-a7a9-f0053de6b276.jpg?v=1723777780&width=1200",
+      "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/WLP_0011.jpg?v=1731961185&width=1200",
+      "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/WLP_0385.jpg?v=1731961222&width=1200",
+      "https://swaddeliniaustralia.myshopify.com/cdn/shop/files/WLP_0202.jpg?v=1731961248&width=1200"
+    ],
+    reservedBy: null,
+    maxReservations: 3
+  },
+  { id: 2, 
+    name: "Nursing Pillow", note: "Essential", 
+    link: "https://puppapupo.global/products/202001?variant=50413842497854", 
+    images: [ 
+          "https://puppapupo.global/cdn/shop/files/202001_s12_g.jpg?v=1726635934&width=1800",
+          "https://puppapupo.global/cdn/shop/files/202001_s02_g.jpg?v=1726635934&width=1080",
+          "https://puppapupo.global/cdn/shop/files/202001_s22_g.jpg?v=1726635935&width=1080",
+          "https://puppapupo.global/cdn/shop/files/202001_s24_g.jpg?v=1726635935&width=1080"  
+    ],
+    reservedBy: null },
+
+  { id: 3, 
+    name: "Change Mat", note: "Nice and simple", 
+    link: "https://www.kmart.com.au/product/foam-change-mat-42751977/", 
+    images: [ 
+          "https://kmartau.mo.cloudinary.net/f4127119-bcec-42b1-951f-bc4443a4d97b.jpg?tx=w_640,h_640",
+          "https://kmartau.mo.cloudinary.net/550e017e-b046-42bf-b20b-b6721bb1381a.jpg" 
+    ], 
+    reservedBy: null,
+    maxReservations: 2 },
+
+
+    { id: 4, 
+      name: "Nappies", 
+      note: "Preferably white", 
+      link: "https://www.econaps.com.au/products/snow-white-modern-cloth-nappy-2-0", 
+      images: [ 
+          "https://www.econaps.com.au/cdn/shop/files/Econaps_2_0-Modern-Cloth-Nappy_Diaper_Snow_White_01.jpg?v=1742867106&width=1680",
+          "https://www.econaps.com.au/cdn/shop/files/Econaps_Snow_White_2_0_Modern_Cloth_Nappy_4.png?v=1714963769&width=1920",
+          "https://www.econaps.com.au/cdn/shop/files/Econaps_Snow_White_2_0_Modern_Cloth_Nappy_3.png?v=1720955297&width=1920" 
+        ], 
+      reservedBy: null,
+      maxReservations: 30  },
+      
+      { id: 5, name: "8 in 1 Sniffle Survival Bundle - Snooze Plus + Nasal Aspirator + Oils", 
+        note: "Very practical", 
+        link: "https://livelyliving.com.au/products/sniffle-survival-bundle-aroma-snooze-plus-usb-rechareable-nasal-aspirator-2-oils", 
+        images: [ 
+          "https://livelyliving.com.au/cdn/shop/files/snoozeplus_nasalaspirator.jpg?v=1740552680",
+          "https://livelyliving.com.au/cdn/shop/files/SnoozePlusAd-01.jpg?v=1740552680",
+          "https://livelyliving.com.au/cdn/shop/files/SnoozePlus_ImageStack4-10_67a00650-a3a5-48fa-bd66-35e2411ca4e2.jpg?v=1740552680",
+          "https://livelyliving.com.au/cdn/shop/files/Aroma-Snooze_Plus_Covers.jpg?v=1740573389"
+
+        ], 
+        reservedBy: null 
+      },
+      { id: 6, name: "Baby Hip Seat", 
+        note: "Preferably Beige", 
+        link: "https://my-little-darling-shop.com/products/baby-hip-seat-comfortable-carry-support-hip-support-seat", 
+        images: [ 
+          "https://my-little-darling-shop.com/cdn/shop/products/Beige_download-main-images-download-variant_variants-0_1280x.jpg?v=1706611453",
+          "https://my-little-darling-shop.com/cdn/shop/products/babyhip1_1000x_1_1024x1024_2x_09430be6-1f86-42e8-b581-a700c9d04695_1280x.webp?v=1706611453",
+          "https://my-little-darling-shop.com/cdn/shop/products/download-main-images-download-variant_main-4_15_1280x.jpg?v=1706611453"
+
+        ], 
+        reservedBy: null 
+      },
+
+      { id: 7, 
+        name: "Angelcare Bath Support Aqua v2", 
+        note: "Baby shampoo and wash also needed", 
+        link: "https://www.babybunting.com.au/product/angelcare-bath-support-light-blue-121907", 
+        images: [ 
+          "https://assets.babybunting.com.au/prd/121907_1.jpg?tr=w-2000,h-2000,f-webp,q-80,cm-pad_resize",
+        ], 
+        reservedBy: null 
+      },
+
+      { id: 8, 
+        name: "Toy Bar", 
+        note: "We already have the bouncer", 
+        link: "https://uppababy.com.au/products/uppababy-mira-bouncer-wonder-wheel-toy-bar-multicolor-walnut-wood", 
+        images: [ 
+          "https://uppababy.com.au/cdn/shop/files/0901-WTY_1-1.webp?v=1713686709&width=2000",
+          "https://uppababy.com.au/cdn/shop/files/0901-WTY_1-2.webp?v=1713686708&width=2000",
+          "https://uppababy.com.au/cdn/shop/files/0901-WTY_1-3.webp?v=1713686709&width=2000"  
+        ], 
+        reservedBy: null 
+      },
+
+      { id: 9, 
+        name: "The Play Gym", 
+        note: "Lots of fun to be had", 
+        link: "https://lovevery.com.au/products/the-play-gym", 
+        images: [ 
+          "https://lovevery.com.au/_next/image/?url=https%3A%2F%2Fimages.ctfassets.net%2F0sea1vycfyqy%2F4JOZWpTK7pjX7kVSzSJWd1%2F0135182a08ebca0346697580ece5d437%2FPlay-Gym_MASTER_VS_R4rev2_1.gif&w=750&q=75",
+
+        ], 
+        reservedBy: null 
+      },
+      { id: 10, 
+        name: "Play Mat", 
+        note: "For our living room", 
+        link: "https://wallabycollective.com/products/natural-linen-baby-play-mat", 
+        images: [ 
+          "https://wallabycollective.com/cdn/shop/files/Wallaby_Collective_Natural_Oat_Linen_Play_Mat_01_2048x2048_22f27df6-b5d4-46cd-a757-b13e198e505b.jpg?v=1727586240&width=823",
+          "https://wallabycollective.com/cdn/shop/files/Wallaby_Collective_Natural_Oat_Linen_Play_Mat_06_2048x2048_9dedf912-4343-4307-90bf-543e2f0bc10c.jpg?v=1727586320&width=823", 
+          "https://wallabycollective.com/cdn/shop/files/Wallaby_Collective_Natural_Linen_Play_Mat_2048x2048_0f728eb3-56e4-4130-ad09-19e116aac3ea.jpg?v=1740554919&width=823"
+        ], 
+        reservedBy: null 
+      },
+      { id: 11, 
+        name: "A Wish for Baby", 
+        note: "“Let her sleep, for when she wakes, she will move mountains.”", 
+        images: [ 
+          "https://th.bing.com/th/id/OIP.AvijbT4cDXc5mjod68hgXwHaHL?w=1200&h=1164&rs=1&pid=ImgDetMain" 
+        ] 
+      },
+      { id: 12, 
+        name: "Little Moments", 
+        note: "“Sometimes the smallest things take up the most room in your heart.” - Winnie the Pooh", 
+        images: [ 
+          "https://i.etsystatic.com/6899684/r/il/19e71c/1796181073/il_1140xN.1796181073_i4dq.jpg" 
+        ] 
+      }
+    ];
+  // Additional gift objects...
+
+
+/* Fetch reservations from the server */
+async function fetchReservations() {
+  try {
+    const response = await fetch(API_URL);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const data = await response.json();
+    data.forEach(entry => {
+      const gift = gifts.find(g => g.id === entry.id);
+      if (gift) gift.reservedBy = entry.reservedBy || null;
+    });
+    renderGifts();
+  } catch (error) {
+    console.error("Error fetching reservations:", error);
+    renderGifts();
+  }
+}
+
+/* Render the gift list */
+function renderGifts() {
+  const container = document.getElementById("giftList");
+  container.innerHTML = "";
+
+  gifts.forEach(gift => {
+    const div = document.createElement("div");
+    div.className = `gift${gift.reservedBy ? " taken" : ""}`;
+    div.innerHTML = `
+      <h3>${gift.name}</h3>
+      ${gift.note ? `<p class="note">${gift.note}</p>` : ""}
+      ${renderSlideshow(gift)}
+      ${renderGiftActions(gift)}
+    `;
+    container.appendChild(div);
+  });
+
+  attachSlideshowEvents();
+}
+
+/* Render slideshow for a gift */
+function renderSlideshow(gift) {
+  if (!gift.images || gift.images.length === 0) return "";
+  const imagesHTML = gift.images.map((url, i) =>
+    `<img src="${url}" class="${i === 0 ? "active" : ""}" alt="${gift.name}">`
+  ).join("");
+  const dotsHTML = gift.images.map((_, i) =>
+    `<span class="dot ${i === 0 ? "active" : ""}"></span>`
+  ).join("");
+  return `
+    <div class="slideshow" id="slideshow-${gift.id}">
+      <button class="slideshow-arrow prev">&#8592;</button>
+      ${imagesHTML}
+      <button class="slideshow-arrow next">&#8594;</button>
+    </div>
+    <div class="slideshow-dots" id="dots-${gift.id}">${dotsHTML}</div>
+  `;
+}
+
+/* Render actions for a gift */
+function renderGiftActions(gift) {
+  if (gift.id === 11 || gift.id === 12) return "";
+
+  const savedName = localStorage.getItem("guestName") || "";
+  const max = gift.maxReservations || 1;
+  const reservedList = Array.isArray(gift.reservedBy) ? gift.reservedBy : gift.reservedBy ? [gift.reservedBy] : [];
+  const available = max - reservedList.length;
+
+  if (available <= 0) {
+    return `
+      <a href="${gift.link}" target="_blank"><button>View Gift</button></a>
+      <p><strong>All reserved!</strong></p>
+    `;
+  }
+
+  return `
+    <a href="${gift.link}" target="_blank"><button>View Gift</button></a>
+    <input type="text" id="name-${gift.id}" placeholder="Your name" value="${savedName}">
+    <button onclick="reserveGift(${gift.id})">Reserve Gift (${available} left)</button>
+    ${reservedList.length ? `<p><strong>Reserved by:</strong> ${reservedList.join(", ")}</p>` : ""}
+  `;
+}
+
+/* Attach slideshow events */
+function attachSlideshowEvents() {
+  gifts.forEach(gift => {
+    if (!gift.images || gift.images.length < 2) return;
+
+    const slideshow = document.getElementById(`slideshow-${gift.id}`);
+    const images = slideshow.querySelectorAll("img");
+    const dots = document.querySelectorAll(`#dots-${gift.id} .dot`);
+    const prev = slideshow.querySelector(".slideshow-arrow.prev");
+    const next = slideshow.querySelector(".slideshow-arrow.next");
+
+    let current = 0;
+    slideIndices[gift.id] = 0;
+
+    function updateSlide(index) {
+      images[current].classList.remove("active");
+      if (dots.length) dots[current].classList.remove("active");
+
+      current = (index + images.length) % images.length;
+
+      images[current].classList.add("active");
+      if (dots.length) dots[current].classList.add("active");
+
+      slideIndices[gift.id] = current;
+    }
+
+    const intervals = new Map();
+
+    const startInterval = () => {
+      if (intervals.has(gift.id)) clearInterval(intervals.get(gift.id));
+      const interval = setInterval(() => updateSlide(current + 1), 3000);
+      intervals.set(gift.id, interval);
+    };
+
+    startInterval();
+
+    slideshow.addEventListener("mouseenter", () => {
+      if (intervals.has(gift.id)) clearInterval(intervals.get(gift.id));
+    });
+
+    slideshow.addEventListener("mouseleave", startInterval);
+
+    prev.addEventListener("click", () => updateSlide(current - 1));
+    next.addEventListener("click", () => updateSlide(current + 1));
+  });
+}
+
+/* Reserve a gift */
+async function reserveGift(id) {
+  const nameInput = document.getElementById(`name-${id}`);
+  const name = nameInput?.value.trim();
+  if (!name) return alert("Please enter your name");
+
+  localStorage.setItem("guestName", name);
+
+  const button = nameInput.nextElementSibling;
+  button.disabled = true;
+  button.innerText = "Reserving...";
+
+  try {
+    const response = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, reservedBy: name }) // backend must append name to list
+    });
+
+    const result = await response.text();
+
+    if (result === "Success") {
+      const gift = gifts.find(g => g.id === id);
+      if (gift) {
+        if (!Array.isArray(gift.reservedBy)) gift.reservedBy = [];
+        gift.reservedBy.push(name);
+      }
+      renderGifts();
+    } else {
+      alert(result);
+      fetchReservations();
+    }
+  } catch (error) {
+    console.error("Error reserving gift:", error);
+    button.disabled = false;
+    button.innerText = "Reserve Gift";
+  }
+}
+
+/* Submit a note or gift suggestion */
+function submitNote() {
+  const name = document.getElementById("otherName").value.trim();
+  const note = document.getElementById("otherNote").value.trim();
+  if (!name || !note) return alert("Please enter your name and note.");
+  document.getElementById("noteConfirm").innerText = `Thank you, ${name}! Your note has been received.`;
+  document.getElementById("otherName").value = "";
+  document.getElementById("otherNote").value = "";
+}
+
+/* Fetch reservations on page load */
+fetchReservations();
+</script>
+</body>
+</html>
