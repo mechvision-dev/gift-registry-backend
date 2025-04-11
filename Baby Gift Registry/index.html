@@ -581,7 +581,7 @@ function renderGiftActions(gift) {
     <a href="${gift.link}" target="_blank"><button>View Gift</button></a>
     <input type="text" id="name-${gift.id}" placeholder="Your name" value="${savedName}">
     <button onclick="reserveGift(${gift.id})">Reserve Gift (${available} left)</button>
-    ${gift.reservedBy ? `<p><strong>Reserved by:</strong> ${gift.reservedBy}</p>` : ""}
+
   `;
 }
 
