@@ -64,7 +64,7 @@
       const res = await fetch("https://gift-registry-backend.onrender.com/check-admin", { credentials: "include" });
       const data = await res.json();
       if (!data.admin) {
-        window.location.href = "admin-login.html";
+        window.location.href = "adminlogin.html";
       }
     }
   
@@ -115,7 +115,7 @@
         method: "POST",
         credentials: "include"
       });
-      window.location.href = "admin-login.html";
+      window.location.href = "adminlogin.html";
     }
   
     checkLogin().then(loadAdminData);
