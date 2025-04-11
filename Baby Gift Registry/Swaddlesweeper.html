@@ -292,27 +292,30 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     // ---- Mobile: double-tap for flag ----
-    let lastTap = 0;
-    let tapTimeout = null;
+let lastTap = 0;
+let tapTimeout = null;
 
-    cell.addEventListener("touchend", () => {
-      const now = Date.now();
-      const tapDelay = now - lastTap;
+cell.addEventListener("touchend", () => {
+  const now = Date.now();
+  const tapDelay = now - lastTap;
 
-      if (tapDelay < 300 && tapDelay > 0) {
-        // Double tap detected
-        clearTimeout(tapTimeout); // cancel pending reveal
-        toggleFlag(i);
-        lastTap = 0;
-      } else {
-        lastTap = now;
-        tapTimeout = setTimeout(() => {
-          if (!board[i].flagged && !board[i].revealed) {
-            reveal(i);
-          }
-        }, 300);
+  if (tapDelay < 300 && tapDelay > 0) {
+    // Double tap detected — cancel scheduled reveal
+    clearTimeout(tapTimeout);
+    tapTimeout = null;
+    toggleFlag(i);
+    lastTap = 0;
+  } else {
+    // Schedule reveal with delay
+    lastTap = now;
+    tapTimeout = setTimeout(() => {
+      if (!board[i].flagged && !board[i].revealed) {
+        reveal(i);
       }
+    }, 320); // Give a bit of room for 2nd tap
+  }
 });
+
 
     grid.appendChild(cell);
   }
