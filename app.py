@@ -4,6 +4,9 @@ import sqlite3
 import os
 from datetime import datetime
 from flask import session
+from pytz import timezone
+
+
 
 app = Flask(__name__)
 
@@ -99,7 +102,10 @@ def reserve():
         if count >= max_allowed:
             return "All spots for this gift are reserved", 409
 
-        conn.execute("INSERT INTO reservations (id, reservedBy) VALUES (?, ?)", (gift_id, reserved_by))
+        local_zone = timezone("Australia/Perth")
+        local_time = datetime.now(local_zone).strftime("%Y-%m-%d %H:%M:%S")
+        conn.execute("INSERT INTO reservations (id, reservedBy, timestamp) VALUES (?, ?, ?)", (gift_id, reserved_by, local_time))
+
         return "Success", 200
 
 
@@ -223,7 +229,10 @@ def submit_note():
         return "Invalid data", 400
 
     with sqlite3.connect(DB_PATH) as conn:
-        conn.execute("INSERT INTO notes (name, message) VALUES (?, ?)", (name, message))
+        local_zone = timezone("Australia/Perth")
+        local_time = datetime.now(local_zone).strftime("%Y-%m-%d %H:%M:%S")
+        conn.execute("INSERT INTO notes (name, message, timestamp) VALUES (?, ?, ?)", (name, message, local_time))
+
         conn.commit()
 
     return "Note saved", 200

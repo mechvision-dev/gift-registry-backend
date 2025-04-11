@@ -41,6 +41,9 @@
 </head>
 <body>
   <button onclick="logout()" style="float:right;background:#ccc;border:none;padding:0.5rem;">Logout</button>
+  <button onclick="window.location.href='index.html'" style="float:left; background:#ccc; border:none; padding:0.5rem; margin-right: 0.5rem;">
+    Home
+  </button>
   <h1>Admin Dashboard</h1>
   <p>This page shows all current reservations.</p>
 
@@ -149,9 +152,11 @@ async function loadNotes() {
       window.location.href = "adminlogin.html";
     }
 
-      loadAdminData();
-      loadNotes(); // 👈 new line
-      checkLogin(); // 👈 new line
+  checkLogin().then(() => {
+    loadAdminData();
+    loadNotes();
+});
+      
   </script>
   
   
