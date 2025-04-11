@@ -39,13 +39,7 @@ def init_db():
 def format_name(name):
     """Standardizes name casing: '  joHn   SMITH ' -> 'John Smith'"""
     return ' '.join(w.capitalize() for w in name.strip().split())
-@app.after_request
-def apply_cors_headers(response):
-    response.headers["Access-Control-Allow-Origin"] = "https://babywishlist.netlify.app"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
-    return response
+
 
 @app.route('/admin-login', methods=['POST'])
 def admin_login():
@@ -198,7 +192,10 @@ def admin_delete():
             return "Reservation not found", 404
         conn.commit()
     return "Reservation deleted", 200
-
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return "Logged out", 200
 
 if __name__ == '__main__':
     init_db()
