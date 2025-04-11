@@ -12,14 +12,14 @@ body {
   background: linear-gradient(to bottom, #fff7f9, #f7d9e3);
   color: #4a4a4a;
   text-align: center;
-  padding: 2rem;
+  padding: 2rem 1rem; 
   margin: 0;
 }
 
 .wrapper {
   max-width: 700px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2rem 1rem;
   background-color: rgba(255, 255, 255, 0.8);
   border-radius: 20px;
   box-shadow: 0 10px 25px rgba(208, 154, 168, 0.4);
@@ -69,17 +69,20 @@ h1 {
 }
 
 .cell {
-  width: 45px;
-  height: 45px;
+  width: 5.5vw;
+  height: 5.5vw;
+  max-width: 45px;
+  max-height: 45px;
   background: linear-gradient(145deg, #f1d4e5, #f0dce4);
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(208, 154, 168, 0.3);
-  font-size: 1.4rem;
+  font-size: 1.2em;
   line-height: 45px;
   color: #c15e78;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   user-select: none;
+  touch-action: manipulation; /* ✅ Keep this outside media query */
 }
 
 .cell:hover {
@@ -148,20 +151,30 @@ small.mobile-hint {
     grid-template-columns: repeat(8, 34px);
     gap: 4px;
   }
+
   .cell {
     width: 34px;
     height: 34px;
     font-size: 1.1rem;
     line-height: 34px;
   }
+
   h1 {
     font-size: 2.2rem;
   }
+
   button, .home-button {
     font-size: 0.9rem;
     padding: 0.4rem 1rem;
   }
+
+  .grid-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 0.5rem 0;
+  }
 }
+
 
   </style>
 </head>
@@ -179,8 +192,6 @@ small.mobile-hint {
       🏆 Best: <span id="best-time">--:--</span>
     </p>
 
-    <div id="grid" class="grid"></div>
-
     <div class="button-area">
       <button onclick="startGame()">Restart Game</button>
     </div>
@@ -194,7 +205,9 @@ small.mobile-hint {
       🩷 = Your marker &nbsp; | &nbsp;
       💩 = Dirty diaper
     </div>
-  
+    <div class="grid-container">
+      <div id="grid" class="grid"></div> 
+    </div>
 
   <script>
 let bestTime = localStorage.getItem('swaddleBestTime') || null;
@@ -436,21 +449,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ---- Mobile: press and hold to flag ----
 let pressTimer = null;
-let longPress = false;
+let longPressTriggered = false;
 
 cell.addEventListener("touchstart", (e) => {
-  longPress = false;
+  longPressTriggered = false;
   pressTimer = setTimeout(() => {
     toggleFlag(i);
-    longPress = true;
-  }, 500); // 500ms press = flag
+    longPressTriggered = true;
+  }, 500);
 });
 
-cell.addEventListener("touchend", () => {
+cell.addEventListener("touchend", (e) => {
   clearTimeout(pressTimer);
-  if (!longPress && !board[i].flagged && !board[i].revealed) {
+  if (!longPressTriggered) {
     reveal(i); // tap = reveal
   }
+});
+
+cell.addEventListener("touchmove", () => {
+  clearTimeout(pressTimer); // Cancel if they move their finger
 });
 
 cell.addEventListener("touchcancel", () => {
