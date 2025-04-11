@@ -109,7 +109,16 @@
         alert("Failed to remove reservation.");
       }
     }
-  
+    async function checkLogin() {
+      const res = await fetch("https://gift-registry-backend.onrender.com/check-admin", {
+        credentials: "include"
+      });
+      const data = await res.json();
+      console.log("[CHECK ADMIN]", data);
+      if (!data.admin) {
+        window.location.href = "adminlogin.html";
+  }
+}
     async function logout() {
       await fetch("https://gift-registry-backend.onrender.com/logout", {
         method: "POST",
