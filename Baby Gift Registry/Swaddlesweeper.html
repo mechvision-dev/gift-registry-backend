@@ -99,6 +99,18 @@
   
 
   <script>
+
+window.addEventListener('DOMContentLoaded', () => {
+  if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+    const hint = document.createElement('small');
+    hint.innerHTML = '👉 On mobile: tap to reveal, double tap to place a 🩷';
+    hint.style.display = 'block';
+    hint.style.marginTop = '1rem';
+    hint.style.color = '#b06d82';
+    document.body.appendChild(hint);
+  }
+});
+
     const size = 8;
     const mineCount = 10;
     let board = [];
@@ -206,22 +218,31 @@
   const el = document.getElementById(`cell-${index}`);
 
   if (!cell.flagged) {
-    cell.flagged = true;
-    el.textContent = '🩷';
-    el.classList.add('flagged');
+  cell.flagged = true;
+  el.textContent = '🩷';
+  el.classList.add('flagged');
 
-    const totalFlags = board.filter(c => c.flagged).length;
+  const totalFlags = board.filter(c => c.flagged).length;
 
-    if (totalFlags > mineCount) {
-      const correctFlags = board.filter(c => c.flagged && c.mine).length;
-      alert(`You've placed too many hearts! There are only ${mineCount} diapers left. You've placed ${totalFlags} hearts, but only ${correctFlags} are correct.`);
-    }
-
-  } else {
-    cell.flagged = false;
-    el.textContent = '';
-    el.classList.remove('flagged');
+  if (totalFlags > mineCount) {
+    const correctFlags = board.filter(c => c.flagged && c.mine).length;
+    alert(`You've placed too many hearts! There are only ${mineCount} diapers left. You've placed ${totalFlags} hearts, but only ${correctFlags} are correct.`);
   }
+
+  if (navigator.vibrate) {
+    navigator.vibrate(50);
+  }
+
+} else {
+  cell.flagged = false;
+  el.textContent = '';
+  el.classList.remove('flagged');
+
+  if (navigator.vibrate) {
+    navigator.vibrate(30);
+  }
+}
+
 }
 
 
@@ -256,7 +277,7 @@
     cell.id = `cell-${i}`;
     cell.className = 'cell';
 
-    // ---- Desktop (mouse): click and right-click ----
+    // ---- Desktop behavior (unchanged) ----
     cell.onclick = () => {
       if (board[i].flagged) {
         toggleFlag(i);
@@ -270,37 +291,33 @@
       toggleFlag(i);
     };
 
-    // ---- Mobile (touch): tap vs long-press ----
-    let pressTimer = null;
-    let longPress = false;
+    // ---- Mobile: double-tap for flag ----
+    let lastTap = 0;
+    let tapTimeout = null;
 
-    cell.addEventListener("touchstart", (e) => {
-      longPress = false;
-      pressTimer = setTimeout(() => {
+    cell.addEventListener("touchend", () => {
+      const now = Date.now();
+      const tapDelay = now - lastTap;
+
+      if (tapDelay < 300 && tapDelay > 0) {
+        // Double tap detected
+        clearTimeout(tapTimeout); // cancel pending reveal
         toggleFlag(i);
-        longPress = true;
-      }, 500);
-    });
-
-    cell.addEventListener("touchend", (e) => {
-      clearTimeout(pressTimer);
-      if (!longPress) {
-        // mimic tap behavior — same as click
-        if (board[i].flagged) {
-          toggleFlag(i);
-        } else if (!board[i].revealed) {
-          reveal(i);
-        }
+        lastTap = 0;
+      } else {
+        lastTap = now;
+        tapTimeout = setTimeout(() => {
+          if (!board[i].flagged && !board[i].revealed) {
+            reveal(i);
+          }
+        }, 300);
       }
-    });
-
-    cell.addEventListener("touchcancel", () => {
-      clearTimeout(pressTimer);
-    });
+});
 
     grid.appendChild(cell);
   }
 }
+
 
     // Auto-start
     startGame();
