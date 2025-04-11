@@ -41,7 +41,7 @@ def format_name(name):
     return ' '.join(w.capitalize() for w in name.strip().split())
 
 
-@app.route('/admin-login', methods=['POST'])
+@app.route('/adminlogin', methods=['POST'])
 def admin_login():
     data = request.get_json()
     password = data.get("password")
