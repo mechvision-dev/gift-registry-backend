@@ -5,94 +5,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Swaddle Sweeper</title>
   <style>
-    body {
-      font-family: 'Quicksand', sans-serif;
-      background-color: #f9f6f3;
-      color: #4a4a4a;
-      text-align: center;
-      padding: 2rem;
-    }
-    h1 {
-      color: #d09aa8;
-      font-size: 2.5rem;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(8, 40px);
-      grid-gap: 5px;
-      justify-content: center;
-      margin: 2rem auto;
-    }
-    .cell {
-      width: 40px;
-      height: 40px;
-      background-color: #fafafa;
-      border: 2px solid #d09aa8;
-      border-radius: 6px;
-      font-size: 1.2rem;
-      line-height: 40px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      user-select: none;
-    }
-    .cell.revealed {
-      background-color: #f0d5db;
-      cursor: default;
-    }
-    .cell.mine {
-      background-color: #bc7e95;
-      color: white;
-    }
-    .cell.flagged {
-      background-color: #ffeef3;
-      color: #d46e8c;
-    }
-    button {
-      background-color: #d09aa8;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #c28494;
-    }
-    @media (max-width: 500px) {
-      .grid {
-        grid-template-columns: repeat(8, 32px);
-      }
-      .cell {
-        width: 32px;
-        height: 32px;
-        font-size: 1rem;
-        line-height: 32px;
-      }
-    }
-    .button-area {
-        text-align: center;
-        margin-top: 2rem;
-    }
-    .wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        position: relative;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap');
 
-    .home-button {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        background: #ebcde4;
-        border: none;
-        padding: 0.5rem;
-        border-radius: 6px;
-        font-weight: bold;
-        color: #fff;
-        cursor: pointer;
-    }
+body {
+  font-family: 'Quicksand', sans-serif;
+  background: linear-gradient(to bottom, #fff7f9, #f7d9e3);
+  color: #4a4a4a;
+  text-align: center;
+  padding: 2rem;
+  margin: 0;
+}
+
+.wrapper {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(208, 154, 168, 0.4);
+  backdrop-filter: blur(8px);
+  position: relative;
+}
+
+.home-button {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: linear-gradient(145deg, #eec4da, #d79fbf);
+  color: #fff;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: none;
+  box-shadow: 0 4px 12px rgba(198, 122, 152, 0.5);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(198, 122, 152, 0.7);
+}
+
+h1 {
+  color: #d46e8c;
+  font-size: 3rem;
+  text-shadow: 0 2px 4px rgba(212, 110, 140, 0.4);
+  margin-bottom: 0.5rem;
+}
+
+#game-info {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #a85d72;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(8, 45px);
+  gap: 6px;
+  justify-content: center;
+  margin: 1.5rem auto;
+}
+
+.cell {
+  width: 45px;
+  height: 45px;
+  background: linear-gradient(145deg, #f1d4e5, #f0dce4);
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(208, 154, 168, 0.3);
+  font-size: 1.4rem;
+  line-height: 45px;
+  color: #c15e78;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+}
+
+.cell:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 15px rgba(208, 154, 168, 0.5);
+}
+
+.cell.revealed {
+  background: linear-gradient(145deg, #f3ceda, #e9b9c9);
+  box-shadow: inset 0 3px 6px rgba(188, 126, 149, 0.3);
+  cursor: default;
+  transform: none;
+}
+
+.cell.mine {
+  background: linear-gradient(145deg, #d46e8c, #b95c77);
+  color: white;
+  text-shadow: 0 2px 3px rgba(0,0,0,0.3);
+}
+
+.cell.flagged {
+  background: linear-gradient(145deg, #ffe0ea, #ffbcd1);
+  color: #d46e8c;
+}
+
+button {
+  background: linear-gradient(145deg, #d46e8c, #b95c77);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.4rem;
+  border-radius: 10px;
+  font-size: 1rem;
+  box-shadow: 0 4px 14px rgba(198, 122, 152, 0.4);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(198, 122, 152, 0.6);
+}
+
+.button-area {
+  margin-top: 2rem;
+}
+
+.legend {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 2px dashed #d09aa8;
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 2rem auto;
+  display: inline-block;
+  box-shadow: 0 4px 10px rgba(208, 154, 168, 0.3);
+  font-size: 1rem;
+}
+
+small.mobile-hint {
+  display: block;
+  margin-top: 1rem;
+  color: #b06d82;
+}
+
+@media (max-width: 500px) {
+  .grid {
+    grid-template-columns: repeat(8, 34px);
+    gap: 4px;
+  }
+  .cell {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+    line-height: 34px;
+  }
+  h1 {
+    font-size: 2.2rem;
+  }
+  button, .home-button {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+  }
+}
 
   </style>
 </head>
