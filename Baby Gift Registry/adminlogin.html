@@ -6,59 +6,96 @@
   <title>Admin Login</title>
   <style>
     body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to bottom, #fef6f8, #fbeef2);
       font-family: Arial, sans-serif;
-      background: #fef6f8;
-      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
     h2 {
       text-align: center;
       color: #b06d82;
+      margin-bottom: 1rem;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .home-btn {
+      background: linear-gradient(to right, #d8d8d8, #ccc);
+      color: #333;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    .home-btn:hover {
+      background: #b0b0b0;
+      transform: scale(1.03);
     }
 
     form {
-      max-width: 320px;
-      margin: 2rem auto;
-      background: #fff;
+      background: white;
       padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(176, 109, 130, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 340px;
+      transition: all 0.3s ease;
     }
 
     input {
       width: 100%;
       padding: 0.6rem;
       margin: 0.75rem 0;
-      border: 1px solid #ccc;
+      border: 1px solid #ddd;
       border-radius: 6px;
       font-size: 1rem;
+      box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+      transition: border 0.2s ease;
     }
 
-    button {
+    input:focus {
+      border-color: #b06d82;
+      outline: none;
+      box-shadow: 0 0 4px rgba(176, 109, 130, 0.3);
+    }
+
+    button[type="submit"] {
       width: 100%;
-      background: #d09aa8;
+      background: linear-gradient(to right, #d09aa8, #b06d82);
       color: white;
       padding: 0.6rem;
       font-size: 1rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
       margin-top: 1rem;
+      box-shadow: 0 4px 10px rgba(176, 109, 130, 0.3);
+      transition: background 0.3s ease, transform 0.2s ease;
     }
 
-    button:hover {
-      background: #b06d82;
+    button[type="submit"]:hover {
+      background: linear-gradient(to right, #c48799, #a65f7b);
+      transform: translateY(-1px);
     }
   </style>
 </head>
 <body>
   <h2>Admin Login</h2>
-  <button onclick="window.location.href='index.html'" style="float:left; background:#ccc; border:none; padding:0.5rem; margin-right: 0.5rem;">
-    Home
-  </button>
+  <button onclick="window.location.href='index.html'" class="home-btn">← Home</button>
+  
   <form id="adminLoginForm">
     <input type="password" id="admin-password" placeholder="Enter admin password" required />
-    <button type="submit">Login</button>
+    <button type="submit" id="loginBtn">Login</button>
   </form>
 
   <script>
@@ -69,6 +106,10 @@
 
       const passwordInput = document.getElementById("admin-password");
       const password = passwordInput.value;
+      const loginBtn = document.getElementById("loginBtn");
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Logging in...";
 
       try {
         const response = await fetch(API_URL + "admin-login", {
@@ -82,10 +123,14 @@
           window.location.href = "admin.html";
         } else {
           alert("Incorrect password. Please try again.");
+          loginBtn.disabled = false;
+          loginBtn.textContent = "Login";
         }
       } catch (err) {
         console.error("Login error:", err);
         alert("There was a problem logging in.");
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login";
       }
     });
   </script>
