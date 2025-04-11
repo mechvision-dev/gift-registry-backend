@@ -74,38 +74,57 @@
         text-align: center;
         margin-top: 2rem;
     }
+    .wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+    }
+
+    .home-button {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: #ebcde4;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        font-weight: bold;
+        color: #fff;
+        cursor: pointer;
+    }
+
   </style>
 </head>
 <body>
-  <button onclick="window.location.href='index.html'" style="float:left; background:#ccc; border:none; padding:0.5rem; margin-right: 0.5rem;">
-    Home
-  </button>
-  <h1>Swaddle Sweeper</h1>
-  <p>Find all the swaddles without hitting a 💩!</p>
-  <p id="game-info">
-    ⏱️ Time: <span id="timer">00:00</span>
-    &nbsp; | &nbsp;
-    💩 Mines: 10
-    <br>
-    🏆 Best: <span id="best-time">--:--</span>
-  </p>
-  
+  <div class="wrapper">
+    <button class="home-button" onclick="window.location.href='index.html'">Home</button>
 
-  <div id="grid" class="grid"></div>
+    <h1>Swaddle Sweeper</h1>
+    <p>Find all the swaddles without hitting a 💩!</p>
+    <p id="game-info">
+      ⏱️ Time: <span id="timer">00:00</span>
+      &nbsp; | &nbsp;
+      💩 Mines: 10
+      <br>
+      🏆 Best: <span id="best-time">--:--</span>
+    </p>
 
-  <div class="button-area">
-    <button onclick="startGame()">Restart Game</button>
-  </div>
+    <div id="grid" class="grid"></div>
 
-  <div style="background-color: #fff5f7; border: 2px dashed #d09aa8; border-radius: 8px; padding: 0.5rem 1rem; margin: 1rem auto; display: inline-block; font-size: 1rem;">
-    <strong>Legend:</strong><br>
-    🍼 = 1 &nbsp; | &nbsp;
-    🧸 = 2 &nbsp; | &nbsp;
-    🎀 = 3 &nbsp; | &nbsp;
-    👶 = 4 &nbsp; | &nbsp;
-    🩷 = Your marker &nbsp; | &nbsp;
-    💩 = Dirty diaper
-  </div>
+    <div class="button-area">
+      <button onclick="startGame()">Restart Game</button>
+    </div>
+
+    <div style="background-color: #fff5f7; border: 2px dashed #d09aa8; border-radius: 8px; padding: 0.5rem 1rem; margin: 1rem auto; display: inline-block; font-size: 1rem;">
+      <strong>Legend:</strong><br>
+      🍼 = 1 &nbsp; | &nbsp;
+      🧸 = 2 &nbsp; | &nbsp;
+      🎀 = 3 &nbsp; | &nbsp;
+      👶 = 4 &nbsp; | &nbsp;
+      🩷 = Your marker &nbsp; | &nbsp;
+      💩 = Dirty diaper
+    </div>
   
 
   <script>
