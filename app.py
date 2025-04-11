@@ -8,6 +8,13 @@ CORS(app)
 
 DB_PATH = os.path.join(os.path.dirname(__file__), 'reservations.db')
 
+# Allow multiple reservations per gift
+GIFT_LIMITS = {
+    1: 3,   # Swaddelini
+    3: 2,   # Change Mat
+    4: 30   # Nappies
+    # Default fallback is 1 for all others
+}
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute('''
