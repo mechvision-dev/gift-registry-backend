@@ -45,16 +45,20 @@ def format_name(name):
 def admin_login():
     data = request.get_json()
     password = data.get("password")
+    print(">>> Admin login attempt with password:", password)
+
     if password == ADMIN_PASSWORD:
         session['admin'] = True
+        print(">>> Login success. session['admin'] =", session.get('admin'))
         return "Logged in", 200
+
+    print(">>> Login failed.")
     return "Unauthorized", 401
 
 @app.route('/check-admin')
 def check_admin():
-    if session.get('admin'):
-        return jsonify({"admin": True})
-    return jsonify({"admin": False})
+    print(">>> Checking admin session. session.get('admin') =", session.get('admin'))
+    return jsonify({"admin": session.get('admin', False)})
 
 @app.route('/', methods=['GET'])
 def get_reservations():
