@@ -707,14 +707,31 @@ async function unreserveGift(id) {
 
 
 /* Submit a note or gift suggestion */
-function submitNote() {
+async function submitNote() {
   const name = document.getElementById("otherName").value.trim();
-  const note = document.getElementById("otherNote").value.trim();
-  if (!name || !note) return alert("Please enter your name and note.");
-  document.getElementById("noteConfirm").innerText = `Thank you, ${name}! Your note has been received.`;
-  document.getElementById("otherName").value = "";
-  document.getElementById("otherNote").value = "";
+  const message = document.getElementById("otherNote").value.trim();
+  if (!name || !message) return alert("Please enter your name and note.");
+
+  try {
+    const res = await fetch("https://gift-registry-backend.onrender.com/notes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, message })
+    });
+
+    if (res.ok) {
+      document.getElementById("noteConfirm").innerText = `Thank you, ${name}! Your note has been received.`;
+      document.getElementById("otherName").value = "";
+      document.getElementById("otherNote").value = "";
+    } else {
+      alert("Failed to submit note.");
+    }
+  } catch (err) {
+    console.error("Note submission failed:", err);
+    alert("Error submitting your note.");
+  }
 }
+
 
 /* Fetch reservations on page load */
 fetchReservations();

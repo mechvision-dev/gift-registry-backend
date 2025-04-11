@@ -39,6 +39,15 @@ def init_db():
                 timestamp TEXT DEFAULT CURRENT_TIMESTAMP
             )
         ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                message TEXT,
+                timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
 
 
 def format_name(name):
@@ -203,6 +212,32 @@ def admin_delete():
 def logout():
     session.clear()
     return "Logged out", 200
+
+@app.route('/notes', methods=['POST'])
+def submit_note():
+    data = request.get_json()
+    name = format_name(data.get("name", ""))
+    message = data.get("message", "")
+
+    if not name or not message:
+        return "Invalid data", 400
+
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute("INSERT INTO notes (name, message) VALUES (?, ?)", (name, message))
+        conn.commit()
+
+    return "Note saved", 200
+
+
+@app.route('/admin/notes', methods=['GET'])
+def get_notes():
+    if not session.get("admin"):
+        return "Unauthorized", 401
+
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.execute("SELECT id, name, message, timestamp FROM notes ORDER BY timestamp DESC")
+        notes = [{"id": row[0], "name": row[1], "message": row[2], "timestamp": row[3]} for row in cursor.fetchall()]
+    return jsonify(notes)
 
 if __name__ == '__main__':
     init_db()

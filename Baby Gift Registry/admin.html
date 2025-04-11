@@ -56,41 +56,63 @@
     </thead>
     <tbody></tbody>
   </table>
+  <h2>Submitted Notes</h2>
+    <table id="notesTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Message</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
   <script>
-
-
-    async function checkLogin() {
-      const res = await fetch("https://gift-registry-backend.onrender.com/check-admin", { credentials: "include" });
-      const data = await res.json();
-      if (!data.admin) {
-        window.location.href = "adminlogin.html";
-      }
-    }
   
     async function loadAdminData() {
-  const res = await fetch("https://gift-registry-backend.onrender.com/admin/reservations", { credentials: "include" });
-  const data = await res.json();
+      const res = await fetch("https://gift-registry-backend.onrender.com/admin/reservations", { credentials: "include" });
+      const data = await res.json();
 
-  const tbody = document.querySelector("#reservationTable tbody");
-  tbody.innerHTML = '';
-  const fragment = document.createDocumentFragment();
+      const tbody = document.querySelector("#reservationTable tbody");
+      tbody.innerHTML = '';
+      const fragment = document.createDocumentFragment();
 
-  data.forEach(entry => {
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${entry.entry_id}</td>
-      <td>${entry.gift_id}</td>
-      <td>${entry.name}</td>
-      <td>${entry.timestamp}</td>
-      <td><button onclick="unreserve(${entry.entry_id})">Unreserve</button></td>
-    `;
-    fragment.appendChild(row);
+      data.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.entry_id}</td>
+          <td>${entry.gift_id}</td>
+          <td>${entry.name}</td>
+          <td>${entry.timestamp}</td>
+          <td><button onclick="unreserve(${entry.entry_id})">Unreserve</button></td>
+        `;
+        fragment.appendChild(row);
+      });
+
+      tbody.appendChild(fragment);
+}
+async function loadNotes() {
+  const res = await fetch("https://gift-registry-backend.onrender.com/admin/notes", {
+    credentials: "include"
   });
 
-  tbody.appendChild(fragment);
-}
+  const data = await res.json();
+  const tbody = document.querySelector("#notesTable tbody");
+  tbody.innerHTML = "";
 
+  data.forEach(note => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${note.id}</td>
+      <td>${note.name}</td>
+      <td>${note.message}</td>
+      <td>${note.timestamp}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
   
     async function unreserve(entryId) {
       if (!confirm(`Remove this reservation?`)) return;
@@ -126,8 +148,10 @@
       });
       window.location.href = "adminlogin.html";
     }
-  
-    checkLogin().then(loadAdminData);
+
+      loadAdminData();
+      loadNotes(); // 👈 new line
+      checkLogin(); // 👈 new line
   </script>
   
   
