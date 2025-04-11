@@ -26,6 +26,10 @@ def init_db():
             )
         ''')
 
+def format_name(name):
+    """Standardizes name casing: '  joHn   SMITH ' -> 'John Smith'"""
+    return ' '.join(w.capitalize() for w in name.strip().split())
+
 @app.route('/', methods=['GET'])
 def get_reservations():
     with sqlite3.connect(DB_PATH) as conn:
@@ -35,13 +39,36 @@ def get_reservations():
 
 @app.route('/', methods=['POST'])
 def reserve():
+    """
+    Handles the reservation of a gift by a user.
+    This function processes a reservation request by extracting the gift ID and the user
+    making the reservation from the request payload. It validates the input, ensures that
+    the user-provided name is standardized, and checks if the maximum allowed reservations
+    for the gift have been reached. If the reservation is valid, it stores the reservation
+    in the database.
+    Returns:
+        tuple: A tuple containing a response message (str) and an HTTP status code (int).
+            - "Invalid data", 400: If the input data is missing or invalid.
+            - "All spots for this gift are reserved", 409: If the maximum allowed reservations
+              for the gift have been reached.
+            - "Success", 200: If the reservation is successfully created.
+    Raises:
+        sqlite3.Error: If there is an issue with the database operation.
+    Notes:
+        - The `reservedBy` field in the request payload is standardized to capitalize each word.
+        - The maximum allowed reservations for a gift are determined by the `GIFT_LIMITS` dictionary.
+        - The database connection is managed using a context manager to ensure proper cleanup.
+    """
     data = request.get_json()
     gift_id = data.get("id")
-    reserved_by = reserved_by.strip().title()  # Consistent formatting
-
+    reserved_by = data.get("reservedBy")
 
     if not gift_id or not reserved_by:
         return "Invalid data", 400
+
+    # Standardize the reserved_by input
+    reserved_by = format_name(reserved_by)
+
 
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.execute("SELECT reservedBy FROM reservations WHERE id = ?", (gift_id,))
@@ -53,6 +80,7 @@ def reserve():
 
         conn.execute("INSERT INTO reservations (id, reservedBy) VALUES (?, ?)", (gift_id, reserved_by))
         return "Success", 200
+
     
 @app.route('/debug-reservations')
 def debug_reservations():
@@ -105,10 +133,15 @@ def unreserve():
     if not gift_id or not reserved_by:
         return "Invalid data", 400
 
+    # Normalize name
+    reserved_by = format_name(reserved_by)
+
+
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("DELETE FROM reservations WHERE id = ? AND reservedBy = ?", (gift_id, reserved_by))
         conn.commit()
     return "Reservation removed", 200
+
     
 if __name__ == '__main__':
     init_db()
