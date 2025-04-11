@@ -29,15 +29,21 @@ def reserve():
     data = request.get_json()
     gift_id = data.get("id")
     reserved_by = data.get("reservedBy")
+
     if not gift_id or not reserved_by:
         return "Invalid data", 400
 
     with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.execute("SELECT * FROM reservations WHERE id = ?", (gift_id,))
-        if cursor.fetchone():
-            return "Already reserved", 409
+        cursor = conn.execute("SELECT reservedBy FROM reservations WHERE id = ?", (gift_id,))
+        existing = [row[0] for row in cursor.fetchall()]
+        max_allowed = GIFT_LIMITS.get(gift_id, 1)
+
+        if len(existing) >= max_allowed:
+            return "All spots for this gift are reserved", 409
+
         conn.execute("INSERT INTO reservations (id, reservedBy) VALUES (?, ?)", (gift_id, reserved_by))
         return "Success", 200
+
 
 if __name__ == '__main__':
     init_db()
