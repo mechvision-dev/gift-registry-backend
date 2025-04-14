@@ -246,6 +246,7 @@ def get_notes():
         notes = [{"id": row[0], "name": row[1], "message": row[2], "timestamp": row[3]} for row in cursor.fetchall()]
     return jsonify(notes)
 
+init_db()
+
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=False, host="0.0.0.0", port=5000)  # For local dev
+    app.run(debug=False, host="0.0.0.0", port=5000)
