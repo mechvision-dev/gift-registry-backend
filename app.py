@@ -21,7 +21,7 @@ app.config.update(
 )
 
 
-# Allow multiple reservations per gift
+# Allow multiple reservations per gift 
 GIFT_LIMITS = {
     1: 3,   # Swaddelini
     3: 2,   # Change Mat
